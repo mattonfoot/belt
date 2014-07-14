@@ -22,5 +22,9 @@
   "bugs": {
     "url": "https://github.com/mattonfoot/belt/issues"
   },
-  "homepage": "https://github.com/mattonfoot/belt"
+  "homepage": "https://github.com/mattonfoot/belt",
+  "devDependencies": {
+    "mocha": ">=1.18.0",
+    "chai": ">=1.9.0"
+  }
 }
