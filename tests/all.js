@@ -205,22 +205,20 @@ describe('using an adapter', function () {
                     resource.links.vehicle.should.be.an( 'array' );
                     resource.links.vehicle.length.should.equal( ids.vehicle.length );
                     resource.links.vehicle.should.include( vehicleid );
-                })
-                .then(function() {
-                    return belt.get( 'vehicle', vehicleid );
+
+                    return resource;
                 })
                 .then(function( resource ) {
-                    should.exist(resource);
+                    return belt.get( 'vehicle', resource.links.vehicle );
+                })
+                .then(function( resources ) {
+                    should.exist(resources);
 
-                    resource.should.not.have.property( '_id' );
-                    resource.id.should.equal( vehicleid );
-
-                    resource.should.not.have.property( '_rev' );
-                    resource.rev.should.not.equal( vehiclerev );
-
-                    resource.should.have.property( 'links' );
-                    resource.links.should.have.property( 'person' );
-                    resource.links.person.should.equal( personid );
+                    resources.forEach(function( resource ) {
+                        resource.should.have.property( 'links' );
+                        resource.links.should.have.property( 'person' );
+                        resource.links.person.should.equal( personid );
+                    });
 
                     done();
                 })
