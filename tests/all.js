@@ -67,6 +67,8 @@ function createResources( belt, fixtures, ids ) {
             promises.push(new Promise(function( resolve ) {
                 belt.create( fixture, data )
                     .then(function( response ) {
+                        console.log( response )
+
                         ids[fixture] = ids[fixture] || [];
 
                         ids[fixture].push( { id: response.id, rev: response.rev });
@@ -97,6 +99,7 @@ describe('using an adapter', function () {
     });
 
     describe('getting a list of resources', function () {
+
 
         it('in collection one', function (done) {
             // test that list is returned correctly
