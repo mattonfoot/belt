@@ -106,9 +106,14 @@ describe('using an adapter', function () {
                   .then(function( resources ) {
                       var found = 0;
 
+                      should.exist( resources );
+
                       ids[fixture].forEach(function ( instance ) {
                           resources.forEach(function( resource ) {
-                              if (resource.id === instance.id) {
+                              resource.should.not.have.property( '_id' );
+                              resource.should.not.have.property( '_rev' );
+
+                              if (resource.id === instance.id && resource.rev === instance.rev) {
                                   found++;
                               }
                           });
@@ -122,19 +127,39 @@ describe('using an adapter', function () {
       }
     });
 
-    /*
-
     describe('getting each individual resource', function () {
 
-        it('in collection one', function (done) {
-            // test that the resource is correct and valid
+        for ( var fixture in fixtures ) {
+            it('in collection "' + fixture + '"', function (done) {
+                var key = fixture;
 
-            // test there is no error
+                RSVP.all(ids[key].map(function ( instance ) {
+                  return new Promise(function ( resolve ) {
+                      belt.get( fixture, instance.id )
+                          .then(function( resource ) {
+                              should.exist(resource);
 
-            done();
-        });
+                              resource.should.not.have.property( '_id' );
+                              resource.should.not.have.property( '_rev' );
+
+                              resource.id.should.equal( instance.id );
+                              resource.rev.should.equal( instance.rev );
+
+                              resolve();
+                          })
+                          .catch(function(error) {
+                              should.not.exist(error);
+                          });
+                  });
+                })).then(function () {
+                  done();
+                });
+            });
+        }
 
     });
+
+    /*
 
     describe('many to one association', function () {
 
