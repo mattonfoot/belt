@@ -23,8 +23,12 @@
     "url": "https://github.com/mattonfoot/belt/issues"
   },
   "homepage": "https://github.com/mattonfoot/belt",
+  "dependencies": {
+    "pouchdb": "~2.2.3",
+    "rsvp": "~3.0.6"
+  },
   "devDependencies": {
-    "mocha": ">=1.18.0",
-    "chai": ">=1.9.0"
+    "mocha": "~1.18.0",
+    "chai": "~1.9.0"
   }
 }
