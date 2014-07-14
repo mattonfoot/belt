@@ -315,16 +315,17 @@ describe('using an adapter', function () {
 
     after(function (done) {
         for (var key in ids) {
-            var promises = ids[key].map(function(instance) {
+            var promises = ids[key].map(function( instance ) {
                 return belt.delete( key, instance.id );
             });
         }
 
         RSVP.all(promises)
             .then(function () {
-              done();
-            }, function () {
-              throw new Error('Failed to delete resources.');
+                done();
+            })
+            .catch(function ( error ) {
+                throw new Error('Failed to delete resources.');
             });
     });
 
