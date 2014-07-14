@@ -64,18 +64,16 @@ function createResources( belt, fixtures, ids ) {
 
     for ( fixture in fixtures ) {
         fixtures[ fixture ].forEach(function( data ) {
-            promises.push(new Promise(function( resolve ) {
-                var key = fixture;
+            var key = fixture;
 
+            promises.push(
                 belt.create( key, data )
                     .then(function( response ) {
                         ids[key] = ids[key] || [];
 
                         ids[key].push( { id: response.id, rev: response.rev });
-
-                        resolve();
-                    });
-            }));
+                    })
+            );
         });
     }
 
@@ -122,7 +120,8 @@ describe('using an adapter', function () {
                       found.should.equal( ids[fixture].length );
 
                       done();
-                  }, done);
+                  })
+                  .catch(done);
           });
       }
     });
@@ -133,44 +132,99 @@ describe('using an adapter', function () {
             it('in collection "' + fixture + '"', function (done) {
                 var key = fixture;
 
-                RSVP.all(ids[key].map(function ( instance ) {
-                  return new Promise(function ( resolve ) {
-                      belt.get( fixture, instance.id )
-                          .then(function( resource ) {
-                              should.exist(resource);
+                var promises = ids[key].map(function ( instance ) {
+                    return belt
+                        .get( fixture, instance.id )
+                        .then(function( resource ) {
+                            should.exist(resource);
 
-                              resource.should.not.have.property( '_id' );
-                              resource.should.not.have.property( '_rev' );
+                            resource.should.not.have.property( '_id' );
+                            resource.id.should.equal( instance.id );
 
-                              resource.id.should.equal( instance.id );
-                              resource.rev.should.equal( instance.rev );
-
-                              resolve();
-                          })
-                          .catch(function(error) {
-                              should.not.exist(error);
-                          });
-                  });
-                })).then(function () {
-                  done();
+                            resource.should.not.have.property( '_rev' );
+                            resource.rev.should.equal( instance.rev );
+                        });
                 });
+
+                RSVP.all(promises)
+                    .then(function() {
+                        done();
+                    })
+                    .catch(done);
             });
         }
 
     });
 
-    /*
-
     describe('many to one association', function () {
 
         it('should be able to associate', function (done) {
-            // test that the resource is correct and valid
+            var personid = ids.person[0].id
+              , personrev = ids.person[0].rev
+              , updaterev
+              , vehicleid = ids.vehicle[0].id
+              , vehiclerev = ids.vehicle[0].rev;
 
-            // test that all referenc3d links are correct
+            belt.get( 'person' , personid )
+                .then(function( resource ) {
+                    resource.id.should.equal( personid );
 
-            // test there is no error
+                    var payload = {
+                          rev: resource.rev,
+                          name: resource.name,
+                          age: resource.age,
+                          links: {
+                              vehicle: ids.vehicle.map(function( instance ) { return instance.id })
+                          }
+                    };
 
-            done();
+                    return belt.update( 'person', personid, payload );
+                })
+                .then(function( info ) {
+                    info.should.have.property( 'id' );
+                    info.id.should.equal( personid );
+
+                    info.should.have.property( 'rev' );
+                    info.rev.should.not.equal( personrev );
+
+                    updaterev = info.rev;
+
+                    return belt.get( 'person', personid );
+                })
+                .then(function( resource ) {
+                    should.exist(resource);
+
+                    resource.should.not.have.property( '_id' );
+                    resource.id.should.equal( personid );
+
+                    resource.should.not.have.property( '_rev' );
+                    resource.rev.should.equal( updaterev );
+
+                    resource.should.have.property( 'links' );
+                    resource.links.should.have.property( 'vehicle' );
+                    resource.links.vehicle.should.be.an( 'array' );
+                    resource.links.vehicle.length.should.equal( ids.vehicle.length );
+                    resource.links.vehicle.should.include( vehicleid );
+                })
+                .then(function() {
+                    return belt.get( 'vehicle', vehicleid );
+                })
+                .then(function( resource ) {
+                    should.exist(resource);
+
+                    resource.should.not.have.property( '_id' );
+                    resource.id.should.equal( vehicleid );
+
+                    resource.should.not.have.property( '_rev' );
+                    resource.rev.should.not.equal( vehiclerev );
+
+                    resource.should.have.property( 'links' );
+                    resource.links.should.have.property( 'person' );
+                    resource.links.person.should.equal( personid );
+
+                    done();
+                })
+                .catch(done);
         });
 
         it('should be able to dissociate', function (done) {
@@ -184,6 +238,8 @@ describe('using an adapter', function () {
         });
 
     });
+
+    /*
 
     describe('one to many association', function () {
 
@@ -260,18 +316,18 @@ describe('using an adapter', function () {
     */
 
     after(function (done) {
-        // delete all resources in the repositories
+        for (var key in ids) {
+            var promises = ids[key].map(function(instance) {
+                return belt.delete( key, instance.id );
+            });
+        }
 
-        /*
-        RSVP.all(ids[key].map(function (id) {
-        })).then(function () {
-          done();
-        }, function () {
-          throw new Error('Failed to delete resources.');
-        });
-        */
-
-        done();
+        RSVP.all(promises)
+            .then(function () {
+              done();
+            }, function () {
+              throw new Error('Failed to delete resources.');
+            });
     });
 
 });
