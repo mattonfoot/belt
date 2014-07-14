@@ -1,9 +1,9 @@
-var should = require('should');
+var should = require('chai').should()
 var RSVP = require('rsvp');
 
 var Promise = RSVP.Promise;
 
-describe('using "' + options.adapter + '" adapter', function () {
+describe('using an adapter', function () {
 
     before(function (done) {
         // create repositories
@@ -23,7 +23,7 @@ describe('using "' + options.adapter + '" adapter', function () {
 
     describe('getting a list of resources', function () {
 
-        it('in collection "' + key + '"', function (done) {
+        it('in collection one', function (done) {
             // test that list is returned correctly
 
             // test there is no error
@@ -35,7 +35,7 @@ describe('using "' + options.adapter + '" adapter', function () {
 
     describe('getting each individual resource', function () {
 
-        it('in collection "' + key + '"', function (done) {
+        it('in collection one', function (done) {
             // test that the resource is correct and valid
 
             // test there is no error

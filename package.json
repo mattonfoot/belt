@@ -4,7 +4,7 @@
   "description": "A linked data layer over PouchDB with built in schema validation.",
   "main": "./lib/index.js",
   "scripts": {
-    "test": "node ./node_modules/mocha/bin/mocha -R spec"
+    "test": "node ./node_modules/mocha/bin/mocha -R spec ./tests/all.js"
   },
   "repository": {
     "type": "git",
