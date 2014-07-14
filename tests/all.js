@@ -98,7 +98,7 @@ describe('using an adapter', function () {
             });
     });
 
-    describe('getting a list of resources', function () {
+    describe('getting all resources', function () {
       for ( var fixture in fixtures ) {
           it('in collection "' + fixture + '"', function (done) {
 
@@ -127,7 +127,7 @@ describe('using an adapter', function () {
       }
     });
 
-    describe('getting each individual resource', function () {
+    describe('getting an individual resource', function () {
 
         for ( var fixture in fixtures ) {
             it('in collection "' + fixture + '"', function (done) {
