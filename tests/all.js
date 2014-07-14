@@ -65,13 +65,13 @@ function createResources( belt, fixtures, ids ) {
     for ( fixture in fixtures ) {
         fixtures[ fixture ].forEach(function( data ) {
             promises.push(new Promise(function( resolve ) {
-                belt.create( fixture, data )
+                var key = fixture;
+
+                belt.create( key, data )
                     .then(function( response ) {
-                        console.log( response )
+                        ids[key] = ids[key] || [];
 
-                        ids[fixture] = ids[fixture] || [];
-
-                        ids[fixture].push( { id: response.id, rev: response.rev });
+                        ids[key].push( { id: response.id, rev: response.rev });
 
                         resolve();
                     });
@@ -99,16 +99,27 @@ describe('using an adapter', function () {
     });
 
     describe('getting a list of resources', function () {
+      for ( var fixture in fixtures ) {
+          it('in collection "' + fixture + '"', function (done) {
 
+              belt.all( fixture )
+                  .then(function( resources ) {
+                      var found = 0;
 
-        it('in collection one', function (done) {
-            // test that list is returned correctly
+                      ids[fixture].forEach(function ( instance ) {
+                          resources.forEach(function( resource ) {
+                              if (resource.id === instance.id) {
+                                  found++;
+                              }
+                          });
+                      });
 
-            // test there is no error
+                      found.should.equal( ids[fixture].length );
 
-            done();
-        });
-
+                      done();
+                  }, done);
+          });
+      }
     });
 
     /*
