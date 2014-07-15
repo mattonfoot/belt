@@ -100,7 +100,7 @@ describe('using an adapter', function () {
       for ( var fixture in fixtures ) {
           it('in collection "' + fixture + '"', function (done) {
 
-              belt.all( fixture )
+              belt.findMany( fixture )
                   .then(function( resources ) {
                       var found = 0;
 
@@ -134,7 +134,7 @@ describe('using an adapter', function () {
 
                 var promises = ids[key].map(function ( instance ) {
                     return belt
-                        .get( fixture, instance.id )
+                        .find( fixture, instance.id )
                         .then(function( resource ) {
                             should.exist(resource);
 
@@ -165,20 +165,15 @@ describe('using an adapter', function () {
               , vehicleid = ids.vehicle[0].id
               , vehiclerev = ids.vehicle[0].rev;
 
-            belt.get( 'person' , personid )
+            belt.find( 'person' , personid )
                 .then(function( resource ) {
                     resource.id.should.equal( personid );
 
-                    var payload = {
-                          rev: resource.rev,
-                          name: resource.name,
-                          age: resource.age,
-                          links: {
-                              vehicle: ids.vehicle.map(function( instance ) { return instance.id })
-                          }
+                    resource.links = {
+                        vehicle: ids.vehicle.map(function( instance ) { return instance.id })
                     };
 
-                    return belt.update( 'person', personid, payload );
+                    return belt.update( 'person', personid, resource );
                 })
                 .then(function( info ) {
                     info.should.have.property( 'id' );
@@ -189,7 +184,7 @@ describe('using an adapter', function () {
 
                     updaterev = info.rev;
 
-                    return belt.get( 'person', personid );
+                    return belt.find( 'person', personid );
                 })
                 .then(function( resource ) {
                     should.exist(resource);
@@ -204,20 +199,21 @@ describe('using an adapter', function () {
                     resource.links.should.have.property( 'vehicle' );
                     resource.links.vehicle.should.be.an( 'array' );
                     resource.links.vehicle.length.should.equal( ids.vehicle.length );
-                    resource.links.vehicle.should.include( vehicleid );
+                    resource.links.vehicle.should.include( ids.vehicle[0].id );
+                    resource.links.vehicle.should.include( ids.vehicle[ids.vehicle.length - 1].id );
 
                     return resource;
                 })
                 .then(function( resource ) {
-                    return belt.get( 'vehicle', resource.links.vehicle );
+                    return belt.findMany( 'vehicle', resource.links.vehicle );
                 })
                 .then(function( resources ) {
                     should.exist(resources);
 
                     resources.forEach(function( resource ) {
                         resource.should.have.property( 'links' );
-                        resource.links.should.have.property( 'person' );
-                        resource.links.person.should.equal( personid );
+                        resource.links.should.have.property( 'owner' );
+                        resource.links.owner.should.equal( personid );
                     });
 
                     done();
@@ -314,9 +310,11 @@ describe('using an adapter', function () {
     */
 
     after(function (done) {
+        var promises = [];
+
         for (var key in ids) {
-            var promises = ids[key].map(function( instance ) {
-                return belt.delete( key, instance.id );
+            ids[key].forEach(function( instance ) {
+                promises.push( belt.delete( key, instance.id ) );
             });
         }
 
