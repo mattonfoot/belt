@@ -194,6 +194,8 @@ describe('using an adapter', function () {
                     resource.links.vehicle.length.should.equal( ids.vehicle.length );
                     resource.links.vehicle.should.include( ids.vehicle[0].id );
                     resource.links.vehicle.should.include( ids.vehicle[ids.vehicle.length - 1].id );
+
+                    return resource;
                 })
                 .then(function( resource ) {
                     return belt.findMany( 'vehicle', resource.links.vehicle );
@@ -201,11 +203,124 @@ describe('using an adapter', function () {
                 .then(function( resources ) {
                     should.exist(resources);
 
-                    resources.forEach(function( resource ) {
-                        resource.should.have.property( 'links' );
-                        resource.links.should.have.property( 'owner' );
-                        resource.links.owner.should.equal( personid );
-                    });
+                    resources
+                        .forEach(function( resource ) {
+                            resource.should.have.property( 'links' );
+                            resource.links.should.have.property( 'owner' );
+                            resource.links.owner.should.equal( personid );
+                        });
+
+                    done();
+                })
+                .catch(done);
+        });
+
+        it('should be able to dissociate', function (done) {
+            var personid = ids.person[0].id
+              , personrev = ids.person[0].rev
+              , vehicleid = ids.vehicle[0].id
+              , vehiclerev = ids.vehicle[0].rev;
+
+            belt.find( 'person' , personid )
+                .then(function( resource ) {
+                    // disassociate vehicles with owner
+
+                    resource.id.should.equal( personid );
+
+                    delete resource.links.vehicle;
+
+                    return belt.update( 'person', personid, resource );
+                })
+                .then(function( info ) {
+                    return belt.find( 'person', info.id );
+                })
+                .then(function( resource ) {
+                    should.exist(resource);
+
+                    resource.should.not.have.property( '_id' );
+                    resource.id.should.equal( personid );
+
+                    resource.should.not.have.property( '_rev' );
+                    resource.rev.should.not.equal( personrev );
+
+                    resource.should.have.property( 'links' );
+                    resource.links.should.not.have.property( 'vehicle' );
+
+                    return resource;
+                })
+                .then(function( resource ) {
+                    return belt.findMany( 'vehicle' );
+                })
+                .then(function( resources ) {
+                    should.exist(resources);
+
+                    resources.length.should.not.equal( 0 )
+                    resources
+                        .forEach(function( resource ) {
+                            resource.should.have.property( 'links' );
+                            resource.links.should.not.have.property( 'owner' );
+                        });
+
+                    done();
+                })
+                .catch(done);
+        });
+
+    });
+
+    describe('one to many association', function () {
+
+        it('should be able to associate', function (done) {
+            var personid = ids.person[0].id
+              , personrev = ids.person[0].rev
+              , partnerid = ids.person[1].id
+              , partnerrev = ids.person[1].rev;
+
+            belt.find( 'person' , personid )
+                .then(function( resource ) {
+                    // associate vehicles with owner
+
+                    resource.id.should.equal( personid );
+
+                    resource.links = {
+                        partner: partnerid
+                    };
+
+                    return belt.update( 'person', personid, resource );
+                })
+                .then(function( info ) {
+                    return belt.find( 'person', info.id );
+                })
+                .then(function( resource ) {
+                    should.exist(resource);
+
+                    resource.should.not.have.property( '_id' );
+                    resource.id.should.equal( personid );
+
+                    resource.should.not.have.property( '_rev' );
+                    resource.rev.should.not.equal( personrev );
+
+                    resource.should.have.property( 'links' );
+                    resource.links.should.have.property( 'partner' );
+                    resource.links.partner.should.equal( partnerid );
+
+                    return resource;
+                })
+                .then(function( resource ) {
+                    return belt.find( 'person', resource.links.partner );
+                })
+                .then(function( resource ) {
+                    should.exist(resource);
+
+                    resource.should.not.have.property( '_id' );
+                    resource.id.should.equal( partnerid );
+
+                    resource.should.not.have.property( '_rev' );
+                    resource.rev.should.not.equal( partnerrev );
+
+                    resource.should.have.property( 'links' );
+                    resource.links.should.have.property( 'partner' );
+                    resource.links.partner.should.equal( personid );
 
                     done();
                 })
@@ -223,33 +338,7 @@ describe('using an adapter', function () {
         });
 
     });
-
-    /*
-
-    describe('one to many association', function () {
-
-        it('should be able to associate', function (done) {
-            // test that the resource is correct and valid
-
-            // test that all referenc3d links are correct
-
-            // test there is no error
-
-            done();
-        });
-
-        it('should be able to dissociate', function (done) {
-            // test that the resource is correct and valid
-
-            // test that all referenc3d links are correct
-
-            // test there is no error
-
-            done();
-        });
-
-    });
-
+/*
     describe('one to one association', function () {
 
         it('should be able to associate', function (done) {
