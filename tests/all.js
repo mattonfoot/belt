@@ -161,12 +161,13 @@ describe('using an adapter', function () {
         it('should be able to associate', function (done) {
             var personid = ids.person[0].id
               , personrev = ids.person[0].rev
-              , updaterev
               , vehicleid = ids.vehicle[0].id
               , vehiclerev = ids.vehicle[0].rev;
 
             belt.find( 'person' , personid )
                 .then(function( resource ) {
+                    // associate vehicles with owner
+
                     resource.id.should.equal( personid );
 
                     resource.links = {
@@ -176,15 +177,7 @@ describe('using an adapter', function () {
                     return belt.update( 'person', personid, resource );
                 })
                 .then(function( info ) {
-                    info.should.have.property( 'id' );
-                    info.id.should.equal( personid );
-
-                    info.should.have.property( 'rev' );
-                    info.rev.should.not.equal( personrev );
-
-                    updaterev = info.rev;
-
-                    return belt.find( 'person', personid );
+                    return belt.find( 'person', info.id );
                 })
                 .then(function( resource ) {
                     should.exist(resource);
@@ -193,7 +186,7 @@ describe('using an adapter', function () {
                     resource.id.should.equal( personid );
 
                     resource.should.not.have.property( '_rev' );
-                    resource.rev.should.equal( updaterev );
+                    resource.rev.should.not.equal( personrev );
 
                     resource.should.have.property( 'links' );
                     resource.links.should.have.property( 'vehicle' );
@@ -201,8 +194,6 @@ describe('using an adapter', function () {
                     resource.links.vehicle.length.should.equal( ids.vehicle.length );
                     resource.links.vehicle.should.include( ids.vehicle[0].id );
                     resource.links.vehicle.should.include( ids.vehicle[ids.vehicle.length - 1].id );
-
-                    return resource;
                 })
                 .then(function( resource ) {
                     return belt.findMany( 'vehicle', resource.links.vehicle );
