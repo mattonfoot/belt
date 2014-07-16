@@ -118,7 +118,8 @@ describe('using an adapter', function () {
                       });
 
                       found.should.equal( ids[fixture].length );
-
+                  })
+                  .then(function() {
                       done();
                   })
                   .catch(done);
@@ -157,27 +158,165 @@ describe('using an adapter', function () {
     });
 
     describe('many to one association', function () {
+        var primaryType = 'person'
+          , primaryRelation = 'owner'
+          , secondaryType = 'vehicle'
+          , secondaryRelation = 'vehicle';
 
-        it('should be able to associate', function (done) {
+        it('link one resource to multiple resources', function (done) {
+            var primaryid = ids.person[0].id
+              , primaryrev = ids.person[0].rev
+              , secondaryid = ids.vehicle[0].id
+              , secondaryrev = ids.vehicle[0].rev
+              , allSecondaryIds = ids.vehicle.map(function( instance ) { return instance.id });
+
+            belt.find( primaryType , primaryid )
+                .then(function( resource ) {
+                    resource.id.should.equal( primaryid );
+
+                    resource.links = {
+                        vehicle: allSecondaryIds
+                    };
+
+                    return belt.update( primaryType, primaryid, resource );
+                })
+                .then(function( info ) {
+                    return belt.find( primaryType, info.id );
+                })
+                .then(function( resource ) {
+                    should.exist(resource);
+
+                    resource.should.not.have.property( '_id' );
+                    resource.id.should.equal( primaryid );
+
+                    resource.should.not.have.property( '_rev' );
+                    resource.rev.should.not.equal( primaryrev );
+
+                    resource.should.have.property( 'links' );
+                    resource.links.should.have.property( secondaryRelation );
+                    resource.links.vehicle.should.be.an( 'array' );
+                    resource.links.vehicle.length.should.equal( allSecondaryIds.length );
+                    resource.links.vehicle.should.include( allSecondaryIds[0] );
+                    resource.links.vehicle.should.include( allSecondaryIds[allSecondaryIds.length - 1] );
+
+                    return resource;
+                })
+                .then(function( resource ) {
+                    return belt.findMany( secondaryType, resource.links.vehicle );
+                })
+                .then(function( resources ) {
+                    should.exist(resources);
+
+                    resources
+                        .forEach(function( resource ) {
+                            resource.should.have.property( 'links' );
+                            resource.links.should.have.property( primaryRelation );
+                            resource.links.owner.should.equal( primaryid );
+                        });
+                })
+                .then(function() {
+                    done();
+                })
+                .catch(done);
+        });
+
+        it('unlink one resource to multiple resources', function (done) {
+            var primaryid = ids.person[0].id
+              , primaryrev = ids.person[0].rev
+              , secondaryid = ids.vehicle[0].id
+              , secondaryrev = ids.vehicle[0].rev;
+
+            belt.find( primaryType , primaryid )
+                .then(function( resource ) {
+                    resource.id.should.equal( primaryid );
+
+                    delete resource.links.vehicle;
+
+                    return belt.update( primaryType, primaryid, resource );
+                })
+                .then(function( info ) {
+                    return belt.find( primaryType, info.id );
+                })
+                .then(function( resource ) {
+                    should.exist(resource);
+
+                    resource.should.not.have.property( '_id' );
+                    resource.id.should.equal( primaryid );
+
+                    resource.should.not.have.property( '_rev' );
+                    resource.rev.should.not.equal( primaryrev );
+
+                    resource.should.have.property( 'links' );
+                    resource.links.should.not.have.property( secondaryRelation );
+
+                    return resource;
+                })
+                .then(function( resource ) {
+                    return belt.findMany( secondaryType );
+                })
+                .then(function( resources ) {
+                    should.exist(resources);
+
+                    resources.length.should.not.equal( 0 )
+                    resources
+                        .forEach(function( resource ) {
+                            resource.should.have.property( 'links' );
+                            resource.links.should.not.have.property( primaryRelation );
+                        });
+                })
+                .then(function() {
+                    done();
+                })
+                .catch(done);
+        });
+
+    });
+
+    describe('one to many association', function () {
+
+        it('link multiple resources to one resource', function (done) {
             var personid = ids.person[0].id
               , personrev = ids.person[0].rev
               , vehicleid = ids.vehicle[0].id
-              , vehiclerev = ids.vehicle[0].rev;
+              , vehiclerev = ids.vehicle[0].rev
+              , allVehicles = ids.vehicle.map(function( instance ) { return instance.id });
 
-            belt.find( 'person' , personid )
-                .then(function( resource ) {
-                    // associate vehicles with owner
+            belt.findMany( 'vehicle' , allVehicles )
+                .then(function( resources ) {
+                    should.exist(resources);
 
-                    resource.id.should.equal( personid );
+                    var promises = resources
+                        .map(function( resource ) {
+                            resource.should.not.have.property( '_id' );
+                            resource.should.have.property( 'id' );
 
-                    resource.links = {
-                        vehicle: ids.vehicle.map(function( instance ) { return instance.id })
-                    };
+                            resource.should.not.have.property( '_rev' );
+                            resource.should.have.property( 'rev' );
 
-                    return belt.update( 'person', personid, resource );
+                            resource.links = {
+                                owner: personid
+                            };
+
+                            return belt.update( 'vehicle', resource );
+                        });
+
+                    return RSVP.all(promises);
                 })
                 .then(function( info ) {
-                    return belt.find( 'person', info.id );
+                    return belt.findMany( 'vehicle', allVehicles );
+                })
+                .then(function( resources ) {
+                    should.exist(resources);
+
+                    resources
+                        .forEach(function( resource ) {
+                            resource.should.have.property( 'links' );
+                            resource.links.should.have.property( 'owner' );
+                            resource.links.owner.should.equal( personid );
+                        });
+                })
+                .then(function( info ) {
+                    return belt.find( 'person', personid );
                 })
                 .then(function( resource ) {
                     should.exist(resource);
@@ -191,31 +330,16 @@ describe('using an adapter', function () {
                     resource.should.have.property( 'links' );
                     resource.links.should.have.property( 'vehicle' );
                     resource.links.vehicle.should.be.an( 'array' );
-                    resource.links.vehicle.length.should.equal( ids.vehicle.length );
-                    resource.links.vehicle.should.include( ids.vehicle[0].id );
-                    resource.links.vehicle.should.include( ids.vehicle[ids.vehicle.length - 1].id );
-
-                    return resource;
-                })
-                .then(function( resource ) {
-                    return belt.findMany( 'vehicle', resource.links.vehicle );
-                })
-                .then(function( resources ) {
-                    should.exist(resources);
-
-                    resources
-                        .forEach(function( resource ) {
-                            resource.should.have.property( 'links' );
-                            resource.links.should.have.property( 'owner' );
-                            resource.links.owner.should.equal( personid );
-                        });
+                    resource.links.vehicle.length.should.equal( allVehicles.length );
+                    resource.links.vehicle.should.include( allVehicles[0] );
+                    resource.links.vehicle.should.include( allVehicles[allVehicles.length - 1] );
 
                     done();
                 })
                 .catch(done);
         });
 
-        it('should be able to dissociate', function (done) {
+        it('unlink multiple resources from one resource', function (done) {
             var personid = ids.person[0].id
               , personrev = ids.person[0].rev
               , vehicleid = ids.vehicle[0].id
@@ -223,8 +347,6 @@ describe('using an adapter', function () {
 
             belt.find( 'person' , personid )
                 .then(function( resource ) {
-                    // disassociate vehicles with owner
-
                     resource.id.should.equal( personid );
 
                     delete resource.links.vehicle;
@@ -268,9 +390,9 @@ describe('using an adapter', function () {
 
     });
 
-    describe('one to many association', function () {
+    describe('one to one association', function () {
 
-        it('should be able to associate', function (done) {
+        it('link one resource to one other', function (done) {
             var personid = ids.person[0].id
               , personrev = ids.person[0].rev
               , partnerid = ids.person[1].id
@@ -327,42 +449,60 @@ describe('using an adapter', function () {
                 .catch(done);
         });
 
-        it('should be able to dissociate', function (done) {
-            // test that the resource is correct and valid
+        it('unlink one resource from one other', function (done) {
+            var personid = ids.person[0].id
+              , personrev = ids.person[0].rev
+              , partnerid = ids.person[1].id
+              , partnerrev = ids.person[1].rev;
 
-            // test that all referenc3d links are correct
+            belt.find( 'person' , personid )
+                .then(function( resource ) {
+                    // disassociate vehicles with owner
 
-            // test there is no error
+                    resource.id.should.equal( personid );
 
-            done();
+                    delete resource.links.partner;
+
+                    return belt.update( 'person', personid, resource );
+                })
+                .then(function( info ) {
+                    return belt.find( 'person', info.id );
+                })
+                .then(function( resource ) {
+                    should.exist(resource);
+
+                    resource.should.not.have.property( '_id' );
+                    resource.id.should.equal( personid );
+
+                    resource.should.not.have.property( '_rev' );
+                    resource.rev.should.not.equal( personrev );
+
+                    resource.should.have.property( 'links' );
+                    resource.links.should.not.have.property( 'partner' );
+
+                    return resource;
+                })
+                .then(function( resource ) {
+                    return belt.findMany( 'person' );
+                })
+                .then(function( resources ) {
+                    should.exist(resources);
+
+                    resources.length.should.not.equal( 0 )
+                    resources
+                        .forEach(function( resource ) {
+                            resource.should.have.property( 'links' );
+                            resource.links.should.not.have.property( 'partner' );
+                        });
+
+                    done();
+                })
+                .catch(done);
         });
 
     });
+
 /*
-    describe('one to one association', function () {
-
-        it('should be able to associate', function (done) {
-            // test that the resource is correct and valid
-
-            // test that all referenc3d links are correct
-
-            // test there is no error
-
-            done();
-        });
-
-        it('should be able to dissociate', function (done) {
-            // test that the resource is correct and valid
-
-            // test that all referenc3d links are correct
-
-            // test there is no error
-
-            done();
-        });
-
-    });
-
     describe('many to many association', function () {
 
         it('should be able to associate', function (done) {
