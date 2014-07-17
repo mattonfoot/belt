@@ -25,14 +25,18 @@ function createRepositories( belt, schemas ) {
     var promises = [];
 
     for ( var name in schemas ) {
+        process( name );
+    }
+
+    return promises;
+
+    function process( name ) {
         promises.push(new Promise(function( resolve ) {
             belt.schema( name, schemas[ name ], true );
 
             resolve();
         }));
     }
-
-    return promises;
 }
 
 var fixtures = {
@@ -63,6 +67,12 @@ function createResources( belt, fixtures, ids ) {
     var promises = [];
 
     for ( var fixture in fixtures ) {
+        process( fixture );
+    }
+
+    return promises;
+
+    function process( fixture ) {
         fixtures[ fixture ]
             .forEach(function( data ) {
                 var key = fixture;
@@ -80,8 +90,6 @@ function createResources( belt, fixtures, ids ) {
                 }));
             });
     }
-
-    return promises;
 }
 
 
@@ -103,39 +111,46 @@ describe('using an adapter', function () {
     });
 
     describe('getting all resources', function () {
-      for ( var fixture in fixtures ) {
-          it('in collection "' + fixture + '"', function (done) {
+        for ( var fixture in fixtures ) {
+            forFixture( fixture );
+        }
 
-              belt.findMany( fixture )
-                  .then(function( resources ) {
-                      var found = 0;
+        function forFixture( fixture ) {
+            it('in collection "' + fixture + '"', function (done) {
 
-                      should.exist( resources );
+                belt.findMany( fixture )
+                    .then(function( resources ) {
+                        var found = 0;
 
-                      ids[fixture].forEach(function ( instance ) {
-                          resources.forEach(function( resource ) {
-                              resource.should.not.have.property( '_id' );
-                              resource.should.not.have.property( '_rev' );
+                        should.exist( resources );
 
-                              if (resource.id === instance.id && resource.rev === instance.rev) {
-                                  found++;
-                              }
-                          });
-                      });
+                        ids[fixture].forEach(function ( instance ) {
+                            resources.forEach(function( resource ) {
+                                resource.should.not.have.property( '_id' );
+                                resource.should.not.have.property( '_rev' );
 
-                      found.should.equal( ids[fixture].length );
-                  })
-                  .then(function() {
-                      done();
-                  })
-                  .catch(done);
-          });
-      }
+                                if (resource.id === instance.id && resource.rev === instance.rev) {
+                                    found++;
+                                }
+                            });
+                        });
+
+                        found.should.equal( ids[fixture].length );
+                    })
+                    .then(function() {
+                        done();
+                    })
+                    .catch(done);
+            });
+        }
     });
 
     describe('getting an individual resource', function () {
-
         for ( var fixture in fixtures ) {
+            forFixture( fixture );
+        }
+
+        function forFixture( fixture ) {
             it('in collection "' + fixture + '"', function (done) {
                 var key = fixture;
 
@@ -160,7 +175,6 @@ describe('using an adapter', function () {
                     .catch(done);
             });
         }
-
     });
 
     describe('many to one association', function () {
@@ -174,7 +188,7 @@ describe('using an adapter', function () {
               , primaryrev = ids.person[0].rev
               , secondaryid = ids.vehicle[0].id
               , secondaryrev = ids.vehicle[0].rev
-              , allSecondaryIds = ids.vehicle.map(function( instance ) { return instance.id });
+              , allSecondaryIds = ids.vehicle.map(function( instance ) { return instance.id; });
 
             belt.find( primaryType , primaryid )
                 .then(function( resource ) {
@@ -262,7 +276,7 @@ describe('using an adapter', function () {
                 .then(function( resources ) {
                     should.exist(resources);
 
-                    resources.length.should.not.equal( 0 )
+                    resources.length.should.not.equal( 0 );
                     resources
                         .forEach(function( resource ) {
                             resource.should.not.have.property( 'links' );
@@ -283,7 +297,7 @@ describe('using an adapter', function () {
               , personrev = ids.person[0].rev
               , vehicleid = ids.vehicle[0].id
               , vehiclerev = ids.vehicle[0].rev
-              , allVehicles = ids.vehicle.map(function( instance ) { return instance.id });
+              , allVehicles = ids.vehicle.map(function( instance ) { return instance.id; });
 
             belt.findMany( 'vehicle' , allVehicles )
                 .then(function( resources ) {
@@ -380,7 +394,7 @@ describe('using an adapter', function () {
                 .then(function( resources ) {
                     should.exist(resources);
 
-                    resources.length.should.not.equal( 0 )
+                    resources.length.should.not.equal( 0 );
                     resources
                         .forEach(function( resource ) {
                             resource.should.not.have.property( 'links' );
@@ -490,7 +504,7 @@ describe('using an adapter', function () {
                 .then(function( resources ) {
                     should.exist(resources);
 
-                    resources.length.should.not.equal( 0 )
+                    resources.length.should.not.equal( 0 );
                     resources
                         .forEach(function( resource ) {
                             resource.should.not.have.property( 'links' );
@@ -535,9 +549,7 @@ describe('using an adapter', function () {
         var promises = [];
 
         for (var key in ids) {
-            ids[key].forEach(function( instance ) {
-                promises.push( belt.delete( key, instance.id ) );
-            });
+            process( key );
         }
 
         RSVP.all(promises)
@@ -547,6 +559,12 @@ describe('using an adapter', function () {
             .catch(function ( error ) {
                 throw new Error('Failed to delete resources.');
             });
+
+        function process( key ) {
+            ids[key].forEach(function( instance ) {
+                promises.push( belt.delete( key, instance.id ) );
+            });
+        }
     });
 
 });
