@@ -24,9 +24,10 @@ var schemas = {
 function createRepositories( belt, schemas ) {
     var promises = [];
 
-    for ( schema in schemas ) {
+    for ( var name in schemas ) {
         promises.push(new Promise(function( resolve ) {
-            belt.schema( schema, schemas[ schema ] );
+            var schema = belt.schema( name, schemas[ name ] );
+            var model = belt.model( name, schema );
 
             resolve();
         }));
@@ -62,19 +63,23 @@ var fixtures = {
 function createResources( belt, fixtures, ids ) {
     var promises = [];
 
-    for ( fixture in fixtures ) {
-        fixtures[ fixture ].forEach(function( data ) {
-            var key = fixture;
+    for ( var fixture in fixtures ) {
+        fixtures[ fixture ]
+            .forEach(function( data ) {
+                var key = fixture;
 
-            promises.push(
-                belt.create( key, data )
-                    .then(function( response ) {
-                        ids[key] = ids[key] || [];
+                promises.push(new Promise(function( resolve, reject ) {
+                    belt.create( key, data )
+                        .then(function( response ) {
+                            ids[key] = ids[key] || [];
 
-                        ids[key].push( { id: response.id, rev: response.rev });
-                    })
-            );
-        });
+                            ids[key].push( { id: response.id, rev: response.rev });
+
+                            resolve();
+                        })
+                        .catch( reject );
+                }));
+            });
     }
 
     return promises;
@@ -83,16 +88,18 @@ function createResources( belt, fixtures, ids ) {
 
 describe('using an adapter', function () {
     var ids = {};
-    var belt = new Belt({ db : require('memdown') });
+    var belt = new Belt( 'belt_test', { db: require('memdown') });
 
     before(function (done) {
         RSVP.all(createRepositories( belt, schemas ))
-            .then(function() { return RSVP.all(createResources( belt, fixtures, ids )); })
-            .then(function () {
-                done();
-            })
-            .catch(function( error ) {
-                throw new Error('Failed to initialize adapter.');
+            .then(function() {
+                var promises = createResources( belt, fixtures, ids );
+
+                RSVP.all( promises )
+                    .then(function () {
+                        done();
+                    })
+                    .catch( done );
             });
     });
 
@@ -246,8 +253,7 @@ describe('using an adapter', function () {
                     resource.should.not.have.property( '_rev' );
                     resource.rev.should.not.equal( primaryrev );
 
-                    resource.should.have.property( 'links' );
-                    resource.links.should.not.have.property( secondaryRelation );
+                    resource.should.not.have.property( 'links' );
 
                     return resource;
                 })
@@ -260,8 +266,7 @@ describe('using an adapter', function () {
                     resources.length.should.not.equal( 0 )
                     resources
                         .forEach(function( resource ) {
-                            resource.should.have.property( 'links' );
-                            resource.links.should.not.have.property( primaryRelation );
+                            resource.should.not.have.property( 'links' );
                         });
                 })
                 .then(function() {
@@ -297,7 +302,7 @@ describe('using an adapter', function () {
                                 owner: personid
                             };
 
-                            return belt.update( 'vehicle', resource );
+                            return belt.update( 'vehicle', resource.id, resource );
                         });
 
                     return RSVP.all(promises);
@@ -331,8 +336,9 @@ describe('using an adapter', function () {
                     resource.links.should.have.property( 'vehicle' );
                     resource.links.vehicle.should.be.an( 'array' );
                     resource.links.vehicle.length.should.equal( allVehicles.length );
-                    resource.links.vehicle.should.include( allVehicles[0] );
-                    resource.links.vehicle.should.include( allVehicles[allVehicles.length - 1] );
+                    allVehicles.forEach(function( id ){
+                        resource.links.vehicle.should.include( id );
+                    });
 
                     done();
                 })
@@ -365,8 +371,7 @@ describe('using an adapter', function () {
                     resource.should.not.have.property( '_rev' );
                     resource.rev.should.not.equal( personrev );
 
-                    resource.should.have.property( 'links' );
-                    resource.links.should.not.have.property( 'vehicle' );
+                    resource.should.not.have.property( 'links' );
 
                     return resource;
                 })
@@ -379,8 +384,7 @@ describe('using an adapter', function () {
                     resources.length.should.not.equal( 0 )
                     resources
                         .forEach(function( resource ) {
-                            resource.should.have.property( 'links' );
-                            resource.links.should.not.have.property( 'owner' );
+                            resource.should.not.have.property( 'links' );
                         });
 
                     done();
@@ -477,8 +481,7 @@ describe('using an adapter', function () {
                     resource.should.not.have.property( '_rev' );
                     resource.rev.should.not.equal( personrev );
 
-                    resource.should.have.property( 'links' );
-                    resource.links.should.not.have.property( 'partner' );
+                    resource.should.not.have.property( 'links' );
 
                     return resource;
                 })
@@ -491,8 +494,7 @@ describe('using an adapter', function () {
                     resources.length.should.not.equal( 0 )
                     resources
                         .forEach(function( resource ) {
-                            resource.should.have.property( 'links' );
-                            resource.links.should.not.have.property( 'partner' );
+                            resource.should.not.have.property( 'links' );
                         });
 
                     done();
@@ -502,7 +504,8 @@ describe('using an adapter', function () {
 
     });
 
-/*
+    /*
+
     describe('many to many association', function () {
 
         it('should be able to associate', function (done) {
