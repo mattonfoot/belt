@@ -45,11 +45,14 @@ module.exports = function( grunt )
     // grunt.registerTask('clean'     , [ 'clean' ]);
 
     // test
-    grunt.registerTask('watch'        , [ 'jshint:src', 'mochaTest:watch' ]);
+    grunt.registerTask('coverage'     , [ 'clean:coverage', 'blanket', 'copy:coverage', 'mochaTest:instrumented', 'mochaTest:coverage', 'mochaTest:lcov']);
     grunt.registerTask('test'         , [ 'jshint:src', 'mochaTest:test' ]);
-    grunt.registerTask('ci'           , [ 'jshint:src', 'mochaTest:ci' ]);
 
     // auto build
-    grunt.registerTask('default'      , [ 'watch' ]);
+    // grunt.registerTask('default'      , [ 'watch' ]);
+
+    // travis-ci
+
+    grunt.registerTask('ci'     , [ 'test', 'coverage', 'mochaTest:travis-cov', 'coveralls']);
 
 };
