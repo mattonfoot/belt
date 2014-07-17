@@ -46,7 +46,7 @@ module.exports = function( grunt )
 
     // test
     grunt.registerTask('coverage'     , [ 'clean:coverage', 'blanket', 'copy:coverage', 'mochaTest:instrumented', 'mochaTest:coverage', 'mochaTest:lcov']);
-    grunt.registerTask('test'         , [ 'jshint:src', 'mochaTest:test' ]);
+    grunt.registerTask('test'         , [ 'jshint', 'mochaTest:test' ]);
 
     // auto build
     // grunt.registerTask('default'      , [ 'watch' ]);

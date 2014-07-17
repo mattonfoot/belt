@@ -4,6 +4,6 @@ module.exports = function( config ) {
         coverage: {
             src: [ 'reports/', 'coverage/' ]
         }
-    }
+    };
 
 };
