@@ -1,4 +1,12 @@
-tmp
+._*
+Thumbs.db
+.Spotlight-V100
+.Trashes
 .DS_Store
+.grunt
+Desktop.ini
 node_modules
+
 npm-debug.log
+
+*.sublime

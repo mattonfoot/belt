@@ -28,8 +28,16 @@
     "rsvp": "~3.0.6"
   },
   "devDependencies": {
-    "memdown": "~0.8.0",
-    "mocha": "~1.18.0",
-    "chai": "~1.9.0"
-  }
+    "chai": "*",
+    "glob": "^4.0.4",
+    "grunt": "*",
+    "grunt-contrib-clean": "*",
+    "grunt-contrib-jshint": "*",
+    "grunt-mocha": "*",
+    "grunt-mocha-test": "^0.11.0",
+    "load-grunt-tasks": "*",
+    "memdown": "*",
+    "mocha": "*"
+  },
+  "engine": "node >= 0.10.0"
 }

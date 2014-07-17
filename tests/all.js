@@ -26,8 +26,7 @@ function createRepositories( belt, schemas ) {
 
     for ( var name in schemas ) {
         promises.push(new Promise(function( resolve ) {
-            var schema = belt.schema( name, schemas[ name ] );
-            var model = belt.model( name, schema );
+            belt.schema( name, schemas[ name ], true );
 
             resolve();
         }));
