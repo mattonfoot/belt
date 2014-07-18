@@ -42,12 +42,16 @@ function createRepositories( belt, schemas ) {
 var fixtures = {
   "person": [
     {
-      "name": "Dilbert",
+      "name": "Jane",
       "age": 21
     },
     {
-      "name": "Wally",
+      "name": "John",
       "age": 42
+    },
+    {
+      "name": "Richard",
+      "age": 36
     }
   ],
   "vehicle": [
@@ -517,33 +521,124 @@ describe('using an adapter', function () {
 
     });
 
-    /*
-
     describe('many to many association', function () {
+        it('link multiple resources to multiple other resources', function (done) {
+            var everyone = []
+              , primaries = []
+              , firstPerson;
 
-        it('should be able to associate', function (done) {
-            // test that the resource is correct and valid
+            ids.person.forEach(function( instance ) {
+                var id = instance.id;
 
-            // test that all referenc3d links are correct
+                everyone.push( id );
 
-            // test there is no error
+                if (!firstPerson) firstPerson = id;
 
-            done();
+                if ( id !== firstPerson ) primaries.push( id );
+            });
+
+            belt.findMany( 'person', primaries )
+                .then(function( resources ) {
+                    should.exist(resources);
+
+                    var promises = resources
+                        .map(function( resource ) {
+                            resource.should.not.have.property( '_id' );
+                            resource.should.have.property( 'id' );
+                            resource.id.should.not.equal( firstPerson );
+
+                            resource.should.not.have.property( '_rev' );
+                            resource.should.have.property( 'rev' );
+
+                            var others = [];
+                            everyone.map(function( id ) { if ( id !== resource.id ) others.push( id ); });
+
+                            resource.links = {
+                                sibling: others
+                            };
+
+                            return belt.update( 'person', resource );
+
+                        });
+
+                    return RSVP.all(promises);
+                })
+                .then(function( info ) {
+                    return belt.findMany( 'person' );
+                })
+                .then(function( resources ) {
+                    should.exist(resources);
+
+                    resources
+                        .forEach(function( resource ) {
+                            resource.should.have.property( 'links' );
+                            resource.links.should.have.property( 'sibling' );
+                            resource.links.sibling.length.should.equal( everyone.length - 1 );
+                            resource.links.sibling.should.not.contain( resource.id );
+                        });
+
+                    done();
+                })
+                .catch(done);
+
         });
 
-        it('should be able to dissociate', function (done) {
-            // test that the resource is correct and valid
+        it('unlink multiple resources from multiple other resources', function (done) {
+            var everyone = []
+              , primaries = []
+              , firstPerson;
 
-            // test that all referenc3d links are correct
+            ids.person.forEach(function( instance ) {
+                var id = instance.id;
 
-            // test there is no error
+                everyone.push( id );
 
-            done();
+                if (!firstPerson) firstPerson = id;
+
+                if ( id !== firstPerson ) primaries.push( id );
+            });
+
+            belt.findMany( 'person', primaries )
+                .then(function( resources ) {
+                    should.exist(resources);
+
+                    var promises = resources
+                        .map(function( resource ) {
+                            resource.should.not.have.property( '_id' );
+                            resource.should.have.property( 'id' );
+                            resource.id.should.not.equal( firstPerson );
+
+                            resource.should.not.have.property( '_rev' );
+                            resource.should.have.property( 'rev' );
+
+                            resource.should.have.property( 'links' );
+                            resource.links.should.have.property( 'sibling' );
+
+                            delete resource.links.sibling;
+
+                            return belt.update( 'person', resource );
+                        });
+
+                    return RSVP.all(promises);
+                })
+                .then(function( resource ) {
+                    return belt.findMany( 'person' );
+                })
+                .then(function( resources ) {
+                    should.exist(resources);
+
+                    resources.length.should.not.equal( 0 );
+                    resources
+                        .forEach(function( resource ) {
+                            resource.should.not.have.property( 'links' );
+                        });
+
+                    done();
+                })
+                .catch(done);
         });
 
     });
-
-    */
 
     after(function (done) {
         var promises = [];

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<checkstyle>
+
+<file name="lib/index.js">
+  
+  <error
+    line="28"
+    severity="warning"
+    message="Cyclomatic: 7,
+    Halstead: 13.200
+    | Effort: 6016.4
+    | Volume: 455.79
+    | Vocabulary: 31"
+    source="_serialize"
+    />
+  
+  <error
+    line="60"
+    severity="warning"
+    message="Cyclomatic: 6,
+    Halstead: 13.750
+    | Effort: 7558.1
+    | Volume: 549.68
+    | Vocabulary: 39"
+    source="_deserialize"
+    />
+  
+  <error
+    line="101"
+    severity="error"
+    message="Cyclomatic: 9,
+    Halstead: 25.125
+    | Effort: 17477
+    | Volume: 695.61
+    | Vocabulary: 42"
+    source="_scrubResource"
+    />
+  
+  <error
+    line="142"
+    severity="warning"
+    message="Cyclomatic: 3,
+    Halstead: 15.600
+    | Effort: 5399.6
+    | Volume: 346.13
+    | Vocabulary: 28"
+    source="&lt;anonymous&gt;"
+    />
+  
+  <error
+    line="161"
+    severity="info"
+    message="Cyclomatic: 5,
+    Halstead: 12.231
+    | Effort: 4831.9
+    | Volume: 395.06
+    | Vocabulary: 19"
+    source="&lt;anonymous&gt;"
+    />
+  
+  <error
+    line="191"
+    severity="info"
+    message="Cyclomatic: 3,
+    Halstead: 12.750
+    | Effort: 3738.9
+    | Volume: 293.25
+    | Vocabulary: 28"
+    source="_getSchemaFields"
+    />
+  
+  <error
+    line="349"
+    severity="warning"
+    message="Cyclomatic: 3,
+    Halstead: 13.750
+    | Effort: 4150.4
+    | Volume: 301.85
+    | Vocabulary: 25"
+    source="dissociate"
+    />
+  
+  <error
+    line="470"
+    severity="info"
+    message="Cyclomatic: 2,
+    Halstead: 9.3750
+    | Effort: 1055.5
+    | Volume: 112.59
+    | Vocabulary: 18"
+    source="Belt"
+    />
+  
+  <error
+    line="489"
+    severity="info"
+    message="Cyclomatic: 2,
+    Halstead: 12.222
+    | Effort: 2007.3
+    | Volume: 164.23
+    | Vocabulary: 20"
+    source="_init"
+    />
+  
+  <error
+    line="499"
+    severity="error"
+    message="Cyclomatic: 9,
+    Halstead: 21.667
+    | Effort: 13558
+    | Volume: 625.76
+    | Vocabulary: 34"
+    source="schema"
+    />
+  
+  <error
+    line="546"
+    severity="warning"
+    message="Cyclomatic: 3,
+    Halstead: 16.900
+    | Effort: 3516.6
+    | Volume: 208.08
+    | Vocabulary: 23"
+    source="create"
+    />
+  
+  <error
+    line="571"
+    severity="warning"
+    message="Cyclomatic: 3,
+    Halstead: 18.850
+    | Effort: 4348.7
+    | Volume: 230.70
+    | Vocabulary: 23"
+    source="update"
+    />
+  
+  <error
+    line="598"
+    severity="info"
+    message="Cyclomatic: 2,
+    Halstead: 9.2857
+    | Effort: 910.92
+    | Volume: 98.099
+    | Vocabulary: 17"
+    source="delete"
+    />
+  
+  <error
+    line="616"
+    severity="info"
+    message="Cyclomatic: 3,
+    Halstead: 9.0000
+    | Effort: 1324.5
+    | Volume: 147.16
+    | Vocabulary: 22"
+    source="find"
+    />
+  
+  <error
+    line="631"
+    severity="warning"
+    message="Cyclomatic: 5,
+    Halstead: 16.875
+    | Effort: 4252.7
+    | Volume: 252.01
+    | Vocabulary: 27"
+    source="findMany"
+    />
+  
+</file>
+
+
+
+<file name="lib/model.js">
+  
+  <error
+    line="8"
+    severity="info"
+    message="Cyclomatic: 2,
+    Halstead: 9.7500
+    | Effort: 952.30
+    | Volume: 97.672
+    | Vocabulary: 15"
+    source="_docMatchesQuery"
+    />
+  
+  <error
+    line="118"
+    severity="info"
+    message="Cyclomatic: 2,
+    Halstead: 10.000
+    | Effort: 2292.5
+    | Volume: 229.25
+    | Vocabulary: 24"
+    source="query"
+    />
+  
+  <error
+    line="125"
+    severity="info"
+    message="Cyclomatic: 3,
+    Halstead: 8.5909
+    | Effort: 1448.0
+    | Volume: 168.56
+    | Vocabulary: 20"
+    source="onComplete"
+    />
+  
+  <error
+    line="163"
+    severity="info"
+    message="Cyclomatic: 2,
+    Halstead: 9.0000
+    | Effort: 2117.0
+    | Volume: 235.23
+    | Vocabulary: 23"
+    source="allDocs"
+    />
+  
+  <error
+    line="165"
+    severity="info"
+    message="Cyclomatic: 4,
+    Halstead: 7.3182
+    | Effort: 1281.7
+    | Volume: 175.14
+    | Vocabulary: 18"
+    source="onComplete"
+    />
+  
+</file>
+
+
+
+</checkstyle>

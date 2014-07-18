@@ -5,11 +5,16 @@ module.exports = function( config ) {
     var tests = ['tests/**/*.js'];
     var coverage = ['coverage/tests/**/*.js'];
 
+    var configSlow = 75;
+    var configTimeout = 2000;
+
     return {
 
         test: {
             options: {
                 reporter: 'spec'
+              , slow: configSlow
+              , timeout: configTimeout
             }
 
           , src: tests
@@ -18,6 +23,8 @@ module.exports = function( config ) {
       , instrumented: {
             options: {
                 reporter: 'spec'
+              , slow: configSlow
+              , timeout: configTimeout
             }
 
           , src: coverage
