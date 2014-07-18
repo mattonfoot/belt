@@ -3,7 +3,7 @@ var RSVP = require('rsvp');
 
 var Promise = RSVP.Promise;
 
-var Belt = require('../lib/belt');
+var Belt = require('../lib/repository');
 
 var schemas = {
     "person": {
