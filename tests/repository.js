@@ -97,7 +97,7 @@ function createResources( belt, fixtures, ids ) {
 }
 
 
-describe('using an adapter', function () {
+describe('using a repository', function () {
     var ids = {};
     var belt = new Belt( 'belt_test', { db: require('memdown') });
 
