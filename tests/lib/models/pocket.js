@@ -15,8 +15,8 @@ Pocket.prototype.getId = function() {
     return this.id;
 };
 
-Pocket.prototype.getName = function() {
-    return this.name;
+Pocket.prototype.getTitle = function() {
+    return this.title;
 };
 
 Pocket.prototype.getWall = function() {

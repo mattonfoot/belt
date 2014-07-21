@@ -49,4 +49,11 @@ Interface.prototype.displayRegionEditor = function( region ) {
     });
 };
 
+Interface.prototype.displayPocketEditor = function( pocket ) {
+    this.calllist.push({
+        call: 'displayPocketEditor'
+      , data: pocket
+    });
+};
+
 module.exports = Interface;

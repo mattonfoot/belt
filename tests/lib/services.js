@@ -154,6 +154,38 @@ Services.prototype.modifyRegion = function( ev ) {
         });
 };
 
+Services.prototype.addPocket = function( ev ) {
+    var _this = this;
+
+    return this._events
+        .extractAddPocketData( ev )
+        .then(function( data ) {
+            return _this._commands.addPocket( data );
+        });
+};
+
+Services.prototype.displayPocketEditor = function( ev ) {
+    var _this = this;
+
+    return this._events
+        .extractTargetId( ev )
+        .then(function( id ) {
+            return _this._queries.getPocket( id );
+        })
+        .then(function( pocket ) {
+            return _this._interface.displayPocketEditor( pocket );
+        });
+};
+
+Services.prototype.modifyPocket = function( ev ) {
+    var _this = this;
+
+    return this._events
+        .extractModifyPocketData( ev )
+        .then(function( data ) {
+            return _this._commands.modifyPocket( data );
+        });
+};
 /*
 Services.prototype.displayBoardsForWall = function( ev ) {
     return this._events
@@ -161,19 +193,6 @@ Services.prototype.displayBoardsForWall = function( ev ) {
         .then( this._queries.getAllBoardsForWall )
         .then( Interface.buildBoards )
         .then( Interface.displayFirstBoard );
-};
-
-Services.prototype.addPocket = function( ev ) {
-    return this._events
-        .extractAddPocketData( ev )
-        .then( Commands.addPocket )
-        .then( Commands.addPocketToBoards );
-};
-
-Services.prototype.modifyPocket = function( ev ) {
-    return this._events
-        .extractModifyPocketData( ev )
-        .then( Commands.modifyPocket );
 };
 */
 

@@ -108,16 +108,12 @@ Events.prototype.extractModifyRegionData = function( ev ) {
     });
 };
 
-/*
 Events.prototype.extractAddPocketData = function( ev ) {
     return new Promise(function( resolve, reject ) {
         var form = ev.target;
 
         var data = {
             title: form.title,
-            content: form.content,
-            tags: form.tags,
-            mentions: form.mentions,
             wall: form.wall
         };
 
@@ -132,13 +128,11 @@ Events.prototype.extractModifyPocketData = function( ev ) {
         var data = {
             id: form.id,
             title: form.title,
-            content: form.content,
-            tags: form.tags,
-            mentions: form.mentions
+            wall: form.wall
         };
 
         resolve( data );
     });
 };
-*/
+
 module.exports = Events;

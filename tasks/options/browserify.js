@@ -4,13 +4,6 @@ module.exports = function( config ) {
             files: {
                 'browser/tests.js': [ 'tests/**/test.*.js' ]
             }
-        },
-
-        watch: {
-            files: {
-                'browser/tests.js': [ 'tests/**/test.*.js' ]
-            },
-            watch: true
         }
     };
 };
