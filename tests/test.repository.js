@@ -98,8 +98,14 @@ function createResources( belt, fixtures, ids ) {
 
 
 describe('using a repository', function () {
-    var ids = {};
-    var belt = new Belt( 'belt_test', { db: require('memdown') });
+    var ids = {}
+      , opts = {};
+
+    if ( !process.browser ) {
+        opts.db = require('memdown');
+    }
+
+    var belt = new Belt( 'belt_test', opts);
 
     before(function (done) {
         RSVP.all(createRepositories( belt, schemas ))

@@ -12,8 +12,14 @@ var should = require('chai').should()
   , Pocket = require('./lib/models/pocket');
 
 describe('Managing Boards', function() {
-    var ids = {};
-    var belt = new Belt( 'belt_board_management_test', { db: require('memdown') });
+    var ids = {}
+      , opts = {};
+
+    if ( !process.browser ) {
+        opts.db = require('memdown');
+    }
+
+    var belt = new Belt( 'belt_board_management_test', opts);
     var events = new Events();
     var interface = new Interface();
     var commands = new Commands( belt );
@@ -28,8 +34,8 @@ describe('Managing Boards', function() {
             .beforeCreate( Wall.onBeforeCreate )
             .beforeUpdate( Wall.onBeforeUpdate );
 
-        belt.resource( 'board', Board.constructor )
-            .schema( Board.schema )
+        belt.schema( 'board', Board.schema )
+            .resource( Board.constructor )
             .validator( Board.validator )
             .beforeCreate( Board.onBeforeCreate )
             .beforeUpdate( Board.onBeforeUpdate );

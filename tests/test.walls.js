@@ -10,8 +10,14 @@ var should = require('chai').should()
   , Wall = require('./lib/models/wall');
 
 describe('Managing Walls', function() {
-    var ids = {};
-    var belt = new Belt( 'belt_wall_management_test', { db: require('memdown') });
+    var ids = {}
+      , opts = {};
+
+    if ( !process.browser ) {
+        opts.db = require('memdown');
+    }
+
+    var belt = new Belt( 'belt_wall_management_test', opts);
     var events = new Events();
     var interface = new Interface();
     var commands = new Commands( belt );
