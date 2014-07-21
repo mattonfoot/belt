@@ -1,6 +1,18 @@
 function Wall( data ) {
-    this.id = data.id;
-    this.name = data.name;
+    for ( var prop in data ) {
+        if ( prop === 'links' ) continue;
+
+        this[prop] = data[prop];
+    }
+
+    this.boards = [];
+    this.pockets = [];
+
+    for ( var link in data.links ) {
+        this[link] = data.links[link];
+    }
+
+    this.constructor = Wall;
 }
 
 Wall.prototype.getId = function() {
@@ -9,6 +21,30 @@ Wall.prototype.getId = function() {
 
 Wall.prototype.getName = function() {
     return this.name;
+};
+
+Wall.prototype.getBoards = function() {
+    return this.boards;
+};
+
+Wall.prototype.addBoard = function( board ) {
+    if ( ~this.boards.indexOf( board.id ) ) {
+        this.boards.push( board.id );
+    }
+
+    return this;
+};
+
+Wall.prototype.getPockets = function() {
+    return this.pockets;
+};
+
+Wall.prototype.addPocket = function( pocket ) {
+    if ( ~this.pockets.indexOf( pocket.id ) ) {
+        this.pockets.push( pocket.id );
+    }
+
+    return this;
 };
 
 Wall.constructor = function( data ) {

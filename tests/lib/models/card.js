@@ -1,13 +1,40 @@
 
 
 function Card( data ) {
-    this.id = data.id;
+    for ( var prop in data ) {
+        if ( prop === 'links' ) continue;
 
-    data.links = data.links || {};
-    this.links = {};
-    this.links.pocket = data.links.pocket;
-    this.links.board = data.links.board;
-    this.links.regions = data.links.regions || [];
+        this[prop] = data[prop];
+    }
+
+    for ( var link in data.links ) {
+        this[link] = data.links[link];
+    }
+
+    this.constructor = Card;
+/*
+    var card = this;
+
+    queue
+      .on( this, 'canvascard:moved', function( data ) {
+        if ( card.id === data.card.id &&
+            ( card.x != data.x || card.y != data.y ) ) {
+          card.moveTo( data.x, data.y );
+        }
+      })
+      .on( this, 'card:moved', function( data ) {
+        if ( card.id === data.id &&
+            ( card.x != data.x || card.y != data.y ) ) {
+          card.moveTo( data.x, data.y );
+        }
+      })
+      .on( this, 'card:updated', function( data ) {
+        if ( card.id === data.id &&
+            ( card.x != data.x || card.y != data.y ) ) {
+          card.moveTo( data.x, data.y );
+        }
+      });
+*/
 }
 
 Card.prototype.getId = function() {
@@ -15,15 +42,28 @@ Card.prototype.getId = function() {
 };
 
 Card.prototype.getPocket = function() {
-    return this.links.pocket;
+    return this.pocket;
 };
 
 Card.prototype.getBoard = function() {
-    return this.links.board;
+    return this.board;
 };
 
-Card.prototype.getRegions = function() {
-    return this.links.regions;
+Card.prototype.getPosition = function() {
+    return {
+        board: this.board,
+        x: this.x,
+        y: this.y
+    };
+};
+
+Card.prototype.moveTo = function( x, y ) {
+    if ( this.x !== x || this.y !== y ) {
+        this.x = x;
+        this.y = y;
+    }
+
+    return this;
 };
 
 Card.constructor = function( data ) {

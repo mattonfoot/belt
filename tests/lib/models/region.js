@@ -1,14 +1,43 @@
 
 
 function Region( data ) {
-    this.id = data.id;
-    this.label = data.label;
-    this.value = data.value;
+    for ( var prop in data ) {
+        if ( prop === 'links' ) continue;
 
-    data.links = data.links || {};
-    this.links = {};
-    this.links.board = data.links.board;
-    this.links.pockets = data.links.pockets || [];
+        this[prop] = data[prop];
+    }
+
+    this.pockets = [];
+
+    for ( var link in data.links ) {
+        this[link] = data.links[link];
+    }
+
+    this.constructor = Region;
+/*
+    var region = this;
+
+    queue
+      .on( this, 'canvasregion:moved', function( data ) {
+        if ( region.id === data.region.id &&
+            ( region.x != data.x || region.y != data.y ) ) {
+          region.moveTo( data.x, data.y );
+        }
+      })
+      .on( this, 'canvasregion:resized', function( data ) {
+        if ( region.id === data.region.id &&
+            ( region.width != data.width || region.height != data.height ) ) {
+          region.resizeTo( data.width, data.height );
+        }
+      })
+      .on( this, 'region:updated', function( data ) {
+        if ( region.id === data.id &&
+            ( region.width != data.width || region.height != data.height || region.x != data.x || region.y != data.y ) ) {
+          region.moveTo( data.x, data.y );
+          region.resizeTo( data.width, data.height );
+        }
+      });
+*/
 }
 
 Region.prototype.getId = function() {
@@ -19,15 +48,46 @@ Region.prototype.getLabel = function() {
     return this.label;
 };
 
+Region.prototype.getColor = function() {
+    return this.color;
+};
+
 Region.prototype.getValue = function() {
     return this.value;
 };
 
 Region.prototype.getBoard = function() {
-    return this.links.board;
+    return this.board;
 };
+
 Region.prototype.getPockets = function() {
-    return this.links.pockets;
+    return this.pockets;
+};
+
+Region.prototype.addPocket = function( pocket ) {
+    if ( ~this.pockets.indexOf( pocket.id ) ) {
+        this.pockets.push( pocket.id );
+    }
+
+    return this;
+};
+
+Region.prototype.moveTo = function( x, y ) {
+    if ( this.x !== x || this.y !== y ) {
+        this.x = x;
+        this.y = y;
+    }
+
+    return this;
+};
+
+Region.prototype.resizeTo = function( width, height ) {
+    if ( this.width !== width || this.height !== height ) {
+        this.width = width;
+        this.height = height;
+    }
+
+    return this;
 };
 
 Region.constructor = function( data ) {

@@ -1,14 +1,20 @@
 
 
 function Pocket( data ) {
-    this.id = data.id;
-    this.title = data.title;
+    for ( var prop in data ) {
+        if ( prop === 'links' ) continue;
 
-    data.links = data.links || {};
-    this.links = {};
-    this.links.wall = data.links.wall;
-    this.links.cards = data.links.cards || [];
-    this.links.regions = data.links.regions || [];
+        this[prop] = data[prop];
+    }
+
+    this.cards = [];
+    this.regions = [];
+
+    for ( var link in data.links ) {
+        this[link] = data.links[link];
+    }
+
+    this.constructor = Pocket;
 }
 
 Pocket.prototype.getId = function() {
@@ -19,15 +25,48 @@ Pocket.prototype.getTitle = function() {
     return this.title;
 };
 
-Pocket.prototype.getWall = function() {
-    return this.links.wall;
+Pocket.prototype.getCardnumber = function() {
+    return this.cardnumber;
 };
+
+Pocket.prototype.getContent = function() {
+    return this.content;
+};
+
+Pocket.prototype.getTags = function() {
+    return this.tags;
+};
+
+Pocket.prototype.getMentions = function() {
+    return this.mentions;
+};
+
+Pocket.prototype.getWall = function() {
+    return this.wall;
+};
+
 Pocket.prototype.getCards = function() {
-    return this.links.cards;
+    return this.cards;
+};
+
+Pocket.prototype.addCard = function( card ) {
+    if ( !~this.cards.indexOf( card.id ) ) {
+        this.cards.push( card.id );
+    }
+
+    return this;
 };
 
 Pocket.prototype.getRegions = function() {
-    return this.links.regions;
+    return this.regions;
+};
+
+Pocket.prototype.addRegion = function( region ) {
+    if ( ~this.regions.indexOf( region.id ) ) {
+        this.regions.push( region.id );
+    }
+
+    return this;
 };
 
 Pocket.constructor = function( data ) {

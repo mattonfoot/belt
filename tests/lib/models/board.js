@@ -1,15 +1,22 @@
 
 
 function Board( data ) {
-    data.links = data.links || {};
+    for ( var prop in data ) {
+        if ( prop === 'links' ) continue;
 
-    this.id = data.id;
-    this.name = data.name;
+        this[prop] = data[prop];
+    }
 
-    this.links = {};
-    this.links.wall = data.links.wall;
-    this.links.cards = data.links.cards || [];
-    this.links.regions = data.links.regions || [];
+    this.cards = [];
+    this.regions = [];
+
+    for ( var link in data.links ) {
+        this[link] = data.links[link];
+    }
+
+    this.shelf = {};
+
+    this.constructor = Board;
 }
 
 Board.prototype.getId = function() {
@@ -21,15 +28,43 @@ Board.prototype.getName = function() {
 };
 
 Board.prototype.getWall = function() {
-    return this.links.wall;
+    return this.wall;
 };
 
 Board.prototype.getCards = function() {
-    return this.links.cards;
+    return this.cards;
+};
+
+Board.prototype.addCard = function( card ) {
+    if ( !~this.cards.indexOf( card.id ) ) {
+        this.cards.push( card.id );
+    }
+
+    return this;
 };
 
 Board.prototype.getRegions = function() {
-    return this.links.regions;
+    return this.regions;
+};
+
+Board.prototype.addRegion = function( region ) {
+    if ( !~this.regions.indexOf( region.id ) ) {
+        this.regions.push( region.id );
+    }
+
+    return this;
+};
+
+Board.prototype.getTransforms = function() {
+    return this.transforms;
+};
+
+Board.prototype.addTransform = function( transform ) {
+    if ( !~this.transforms.indexOf( transform.id ) ) {
+        this.transforms.push( transform.id );
+    }
+
+    return this;
 };
 
 Board.constructor = function( data ) {
