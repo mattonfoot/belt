@@ -42,21 +42,20 @@ Events.prototype.extractModifyWallData = function( ev ) {
         var form = ev.target;
 
         var data = {
-            id: form.name,
+            id: form.id,
             name: form.name
         };
 
         resolve( data );
     });
 };
-/*
+
 Events.prototype.extractAddBoardData = function( ev ) {
     return new Promise(function( resolve, reject ) {
         var form = ev.target;
 
         var data = {
             name: form.name,
-            transform: form.transform,
             wall: form.wall
         };
 
@@ -71,12 +70,13 @@ Events.prototype.extractModifyBoardData = function( ev ) {
         var data = {
             id: form.id,
             name: form.name,
-            transform: form.transform
+            wall: form.wall
         };
 
         resolve( data );
     });
 };
+/*
 
 Events.prototype.extractAddPocketData = function( ev ) {
     return new Promise(function( resolve, reject ) {

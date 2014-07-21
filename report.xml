@@ -1,9 +1,89 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <jslint>
-<file name="lib/index.js">
+<file name="lib/repository.js">
   
   <issue
-    line="28"
+    line="11"
+    char="Repository"
+    evidence="Repository is too complicated"
+    reason="Cyclomatic: 2,
+    Halstead: 9.3750
+    | Effort: 1055.5
+    | Volume: 112.59
+    | Vocabulary: 18" />
+  
+  <issue
+    line="30"
+    char="&lt;anonymous&gt;._init"
+    evidence="&lt;anonymous&gt;._init is too complicated"
+    reason="Cyclomatic: 2,
+    Halstead: 11.632
+    | Effort: 3547.6
+    | Volume: 305.00
+    | Vocabulary: 32" />
+  
+  <issue
+    line="48"
+    char="&lt;anonymous&gt;.schema"
+    evidence="&lt;anonymous&gt;.schema is too complicated"
+    reason="Cyclomatic: 9,
+    Halstead: 21.667
+    | Effort: 13558
+    | Volume: 625.76
+    | Vocabulary: 34" />
+  
+  <issue
+    line="95"
+    char="&lt;anonymous&gt;.create"
+    evidence="&lt;anonymous&gt;.create is too complicated"
+    reason="Cyclomatic: 3,
+    Halstead: 16.900
+    | Effort: 3516.6
+    | Volume: 208.08
+    | Vocabulary: 23" />
+  
+  <issue
+    line="121"
+    char="&lt;anonymous&gt;.update"
+    evidence="&lt;anonymous&gt;.update is too complicated"
+    reason="Cyclomatic: 3,
+    Halstead: 18.850
+    | Effort: 4348.7
+    | Volume: 230.70
+    | Vocabulary: 23" />
+  
+  <issue
+    line="156"
+    char="&lt;anonymous&gt;.delete"
+    evidence="&lt;anonymous&gt;.delete is too complicated"
+    reason="Cyclomatic: 2,
+    Halstead: 9.2857
+    | Effort: 910.92
+    | Volume: 98.099
+    | Vocabulary: 17" />
+  
+  <issue
+    line="174"
+    char="&lt;anonymous&gt;.find"
+    evidence="&lt;anonymous&gt;.find is too complicated"
+    reason="Cyclomatic: 3,
+    Halstead: 9.0000
+    | Effort: 1324.5
+    | Volume: 147.16
+    | Vocabulary: 22" />
+  
+  <issue
+    line="189"
+    char="&lt;anonymous&gt;.findMany"
+    evidence="&lt;anonymous&gt;.findMany is too complicated"
+    reason="Cyclomatic: 5,
+    Halstead: 16.875
+    | Effort: 4252.7
+    | Volume: 252.01
+    | Vocabulary: 27" />
+  
+  <issue
+    line="246"
     char="_serialize"
     evidence="_serialize is too complicated"
     reason="Cyclomatic: 7,
@@ -13,7 +93,7 @@
     | Vocabulary: 31" />
   
   <issue
-    line="60"
+    line="278"
     char="_deserialize"
     evidence="_deserialize is too complicated"
     reason="Cyclomatic: 6,
@@ -23,7 +103,7 @@
     | Vocabulary: 39" />
   
   <issue
-    line="101"
+    line="319"
     char="_scrubResource"
     evidence="_scrubResource is too complicated"
     reason="Cyclomatic: 9,
@@ -33,7 +113,7 @@
     | Vocabulary: 42" />
   
   <issue
-    line="142"
+    line="360"
     char="&lt;anonymous&gt;"
     evidence="&lt;anonymous&gt; is too complicated"
     reason="Cyclomatic: 3,
@@ -43,7 +123,7 @@
     | Vocabulary: 28" />
   
   <issue
-    line="161"
+    line="379"
     char="&lt;anonymous&gt;"
     evidence="&lt;anonymous&gt; is too complicated"
     reason="Cyclomatic: 5,
@@ -53,7 +133,7 @@
     | Vocabulary: 19" />
   
   <issue
-    line="191"
+    line="409"
     char="_getSchemaFields"
     evidence="_getSchemaFields is too complicated"
     reason="Cyclomatic: 3,
@@ -63,94 +143,97 @@
     | Vocabulary: 28" />
   
   <issue
-    line="349"
+    line="564"
     char="dissociate"
     evidence="dissociate is too complicated"
     reason="Cyclomatic: 3,
-    Halstead: 13.750
-    | Effort: 4150.4
-    | Volume: 301.85
-    | Vocabulary: 25" />
-  
-  <issue
-    line="470"
-    char="Belt"
-    evidence="Belt is too complicated"
-    reason="Cyclomatic: 2,
-    Halstead: 9.3750
-    | Effort: 1055.5
-    | Volume: 112.59
-    | Vocabulary: 18" />
-  
-  <issue
-    line="489"
-    char="_init"
-    evidence="_init is too complicated"
-    reason="Cyclomatic: 2,
-    Halstead: 12.222
-    | Effort: 2007.3
-    | Volume: 164.23
-    | Vocabulary: 20" />
-  
-  <issue
-    line="499"
-    char="schema"
-    evidence="schema is too complicated"
-    reason="Cyclomatic: 9,
-    Halstead: 21.667
-    | Effort: 13558
-    | Volume: 625.76
-    | Vocabulary: 34" />
-  
-  <issue
-    line="546"
-    char="create"
-    evidence="create is too complicated"
-    reason="Cyclomatic: 3,
-    Halstead: 16.900
-    | Effort: 3516.6
-    | Volume: 208.08
+    Halstead: 15.583
+    | Effort: 4652.5
+    | Volume: 298.56
     | Vocabulary: 23" />
   
   <issue
-    line="571"
-    char="update"
-    evidence="update is too complicated"
-    reason="Cyclomatic: 3,
-    Halstead: 18.850
-    | Effort: 4348.7
-    | Volume: 230.70
-    | Vocabulary: 23" />
-  
-  <issue
-    line="598"
-    char="delete"
-    evidence="delete is too complicated"
+    line="659"
+    char="_addSingleDoc"
+    evidence="_addSingleDoc is too complicated"
     reason="Cyclomatic: 2,
-    Halstead: 9.2857
-    | Effort: 910.92
-    | Volume: 98.099
-    | Vocabulary: 17" />
+    Halstead: 9.4545
+    | Effort: 1847.5
+    | Volume: 195.40
+    | Vocabulary: 19" />
+  
+</file>
+<file name="lib/adapter.js">
   
   <issue
-    line="616"
-    char="find"
-    evidence="find is too complicated"
+    line="38"
+    char="&lt;anonymous&gt;.resource"
+    evidence="&lt;anonymous&gt;.resource is too complicated"
     reason="Cyclomatic: 3,
-    Halstead: 9.0000
-    | Effort: 1324.5
-    | Volume: 147.16
-    | Vocabulary: 22" />
+    Halstead: 10.000
+    | Effort: 1370.6
+    | Volume: 137.06
+    | Vocabulary: 14" />
   
   <issue
-    line="631"
-    char="findMany"
-    evidence="findMany is too complicated"
-    reason="Cyclomatic: 5,
-    Halstead: 16.875
-    | Effort: 4252.7
-    | Volume: 252.01
-    | Vocabulary: 27" />
+    line="53"
+    char="&lt;anonymous&gt;.schema"
+    evidence="&lt;anonymous&gt;.schema is too complicated"
+    reason="Cyclomatic: 3,
+    Halstead: 11.000
+    | Effort: 1672.0
+    | Volume: 152.00
+    | Vocabulary: 16" />
+  
+  <issue
+    line="68"
+    char="&lt;anonymous&gt;.validator"
+    evidence="&lt;anonymous&gt;.validator is too complicated"
+    reason="Cyclomatic: 3,
+    Halstead: 10.000
+    | Effort: 1370.6
+    | Volume: 137.06
+    | Vocabulary: 14" />
+  
+  <issue
+    line="83"
+    char="&lt;anonymous&gt;.beforeCreate"
+    evidence="&lt;anonymous&gt;.beforeCreate is too complicated"
+    reason="Cyclomatic: 3,
+    Halstead: 15.556
+    | Effort: 3436.1
+    | Volume: 220.89
+    | Vocabulary: 19" />
+  
+  <issue
+    line="99"
+    char="&lt;anonymous&gt;.beforeUpdate"
+    evidence="&lt;anonymous&gt;.beforeUpdate is too complicated"
+    reason="Cyclomatic: 3,
+    Halstead: 15.556
+    | Effort: 3436.1
+    | Volume: 220.89
+    | Vocabulary: 19" />
+  
+  <issue
+    line="115"
+    char="&lt;anonymous&gt;.create"
+    evidence="&lt;anonymous&gt;.create is too complicated"
+    reason="Cyclomatic: 2,
+    Halstead: 10.435
+    | Effort: 4014.2
+    | Volume: 384.70
+    | Vocabulary: 35" />
+  
+  <issue
+    line="139"
+    char="&lt;anonymous&gt;.update"
+    evidence="&lt;anonymous&gt;.update is too complicated"
+    reason="Cyclomatic: 2,
+    Halstead: 10.286
+    | Effort: 3476.3
+    | Volume: 337.97
+    | Vocabulary: 33" />
   
 </file>
 <file name="lib/model.js">
@@ -166,17 +249,27 @@
     | Vocabulary: 15" />
   
   <issue
-    line="118"
+    line="43"
+    char="put"
+    evidence="put is too complicated"
+    reason="Cyclomatic: 2,
+    Halstead: 8.3333
+    | Effort: 1476.7
+    | Volume: 177.20
+    | Vocabulary: 20" />
+  
+  <issue
+    line="116"
     char="query"
     evidence="query is too complicated"
     reason="Cyclomatic: 2,
-    Halstead: 10.000
-    | Effort: 2292.5
-    | Volume: 229.25
+    Halstead: 9.6429
+    | Effort: 2122.2
+    | Volume: 220.08
     | Vocabulary: 24" />
   
   <issue
-    line="125"
+    line="136"
     char="onComplete"
     evidence="onComplete is too complicated"
     reason="Cyclomatic: 3,
@@ -190,13 +283,13 @@
     char="allDocs"
     evidence="allDocs is too complicated"
     reason="Cyclomatic: 2,
-    Halstead: 9.0000
-    | Effort: 2117.0
-    | Volume: 235.23
+    Halstead: 8.6786
+    | Effort: 1962.9
+    | Volume: 226.18
     | Vocabulary: 23" />
   
   <issue
-    line="165"
+    line="189"
     char="onComplete"
     evidence="onComplete is too complicated"
     reason="Cyclomatic: 4,
@@ -204,6 +297,9 @@
     | Effort: 1281.7
     | Volume: 175.14
     | Vocabulary: 18" />
+  
+</file>
+<file name="lib/index.js">
   
 </file>
 </jslint>
