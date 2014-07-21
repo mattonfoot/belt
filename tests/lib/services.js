@@ -3,14 +3,14 @@ var RSVP = require('rsvp')
 
 // Application
 
-function Application( events, commands, queries, interface ) {
+function Services( events, commands, queries, interface ) {
     this._events = events;
     this._commands = commands;
     this._queries = queries;
     this._interface = interface;
 }
 
-Application.prototype.addWall = function( ev ) {
+Services.prototype.addWall = function( ev ) {
     var _this = this;
 
     return this._events
@@ -20,7 +20,7 @@ Application.prototype.addWall = function( ev ) {
         });
 };
 
-Application.prototype.displayWallEditor = function( ev ) {
+Services.prototype.displayWallEditor = function( ev ) {
     var _this = this;
 
     return this._events
@@ -33,7 +33,7 @@ Application.prototype.displayWallEditor = function( ev ) {
         });
 };
 
-Application.prototype.modifyWall = function( ev ) {
+Services.prototype.modifyWall = function( ev ) {
     var _this = this;
 
     return this._events
@@ -43,7 +43,7 @@ Application.prototype.modifyWall = function( ev ) {
         });
 };
 
-Application.prototype.openWallSelector = function( ev ) {
+Services.prototype.openWallSelector = function( ev ) {
     var _this = this;
 
     return this._events
@@ -57,7 +57,7 @@ Application.prototype.openWallSelector = function( ev ) {
 };
 
 
-Application.prototype.displayWall = function( ev ) {
+Services.prototype.displayWall = function( ev ) {
     var _this = this;
 
     return this._events
@@ -77,7 +77,7 @@ Application.prototype.displayWall = function( ev ) {
         });
 };
 
-Application.prototype.addBoard = function( ev ) {
+Services.prototype.addBoard = function( ev ) {
     var _this = this, board;
 
     return this._events
@@ -98,7 +98,7 @@ Application.prototype.addBoard = function( ev ) {
         });
 };
 
-Application.prototype.displayBoardEditor = function( ev ) {
+Services.prototype.displayBoardEditor = function( ev ) {
     var _this = this;
 
     return this._events
@@ -111,7 +111,7 @@ Application.prototype.displayBoardEditor = function( ev ) {
         });
 };
 
-Application.prototype.modifyBoard = function( ev ) {
+Services.prototype.modifyBoard = function( ev ) {
     var _this = this;
 
     return this._events
@@ -121,8 +121,41 @@ Application.prototype.modifyBoard = function( ev ) {
         });
 };
 
+Services.prototype.addRegion = function( ev ) {
+    var _this = this;
+
+    return this._events
+        .extractAddRegionData( ev )
+        .then(function( data ) {
+            return _this._commands.addRegion( data );
+        });
+};
+
+Services.prototype.displayRegionEditor = function( ev ) {
+    var _this = this;
+
+    return this._events
+        .extractTargetId( ev )
+        .then(function( id ) {
+            return _this._queries.getRegion( id );
+        })
+        .then(function( region ) {
+            return _this._interface.displayRegionEditor( region );
+        });
+};
+
+Services.prototype.modifyRegion = function( ev ) {
+    var _this = this;
+
+    return this._events
+        .extractModifyRegionData( ev )
+        .then(function( data ) {
+            return _this._commands.modifyRegion( data );
+        });
+};
+
 /*
-Application.prototype.displayBoardsForWall = function( ev ) {
+Services.prototype.displayBoardsForWall = function( ev ) {
     return this._events
         .extractTargetId( ev )
         .then( this._queries.getAllBoardsForWall )
@@ -130,36 +163,18 @@ Application.prototype.displayBoardsForWall = function( ev ) {
         .then( Interface.displayFirstBoard );
 };
 
-Application.prototype.modifyBoard = function( ev ) {
-    return this._events
-        .extractModifyBoardData( ev )
-        .then( Commands.modifyBoard );
-};
-
-Application.prototype.addPocket = function( ev ) {
+Services.prototype.addPocket = function( ev ) {
     return this._events
         .extractAddPocketData( ev )
         .then( Commands.addPocket )
         .then( Commands.addPocketToBoards );
 };
 
-Application.prototype.modifyPocket = function( ev ) {
+Services.prototype.modifyPocket = function( ev ) {
     return this._events
         .extractModifyPocketData( ev )
         .then( Commands.modifyPocket );
 };
-
-Application.prototype.addRegion = function( ev ) {
-    this._events.extractAddRegionData( ev )
-        .then( Commands.addRegion );
-};
-
-Application.prototype.modifyRegion = function( ev ) {
-    return this._events
-        .extractModifyRegionData( ev )
-        .then( Commands.modifyRegion );
-};
 */
-var app = new Application();
 
-module.exports = Application;
+module.exports = Services;

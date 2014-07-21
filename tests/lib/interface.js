@@ -35,10 +35,17 @@ Interface.prototype.displayWall = function( wall ) {
     });
 };
 
-Interface.prototype.displayBoardEditor = function( wall ) {
+Interface.prototype.displayBoardEditor = function( board ) {
     this.calllist.push({
         call: 'displayBoardEditor'
-      , data: wall
+      , data: board
+    });
+};
+
+Interface.prototype.displayRegionEditor = function( region ) {
+    this.calllist.push({
+        call: 'displayRegionEditor'
+      , data: region
     });
 };
 

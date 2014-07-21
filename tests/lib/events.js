@@ -76,8 +76,39 @@ Events.prototype.extractModifyBoardData = function( ev ) {
         resolve( data );
     });
 };
-/*
 
+Events.prototype.extractAddRegionData = function( ev ) {
+    return new Promise(function( resolve, reject ) {
+        var form = ev.target;
+
+        var data = {
+            label: form.label,
+            value: form.value,
+            color: form.color,
+            board: form.board
+        };
+
+        resolve( data );
+    });
+};
+
+Events.prototype.extractModifyRegionData = function( ev ) {
+    return new Promise(function( resolve, reject ) {
+        var form = ev.target;
+
+        var data = {
+            id: form.id,
+            label: form.label,
+            value: form.value,
+            color: form.color,
+            board: form.board
+        };
+
+        resolve( data );
+    });
+};
+
+/*
 Events.prototype.extractAddPocketData = function( ev ) {
     return new Promise(function( resolve, reject ) {
         var form = ev.target;
@@ -104,36 +135,6 @@ Events.prototype.extractModifyPocketData = function( ev ) {
             content: form.content,
             tags: form.tags,
             mentions: form.mentions
-        };
-
-        resolve( data );
-    });
-};
-
-Events.prototype.extractAddRegionData = function( ev ) {
-    return new Promise(function( resolve, reject ) {
-        var form = ev.target;
-
-        var data = {
-            label: form.label,
-            value: form.value,
-            color: form.color,
-            board: form.board
-        };
-
-        resolve( data );
-    });
-};
-
-Events.prototype.extractModifyRegionData = function( ev ) {
-    return new Promise(function( resolve, reject ) {
-        var form = ev.target;
-
-        var data = {
-            id: form.id,
-            label: form.label,
-            value: form.value,
-            color: form.color
         };
 
         resolve( data );

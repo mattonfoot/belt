@@ -25,12 +25,22 @@ describe('Managing Walls', function() {
 
     var services = new Services( events, commands, queries, interface );
 
-    before(function () {
+    var wall;
+    before(function (done) {
         belt.resource( 'wall', Wall.constructor )
             .schema( Wall.schema )
             .validator( Wall.validator )
             .beforeCreate( Wall.onBeforeCreate )
             .beforeUpdate( Wall.onBeforeUpdate );
+
+        services.addWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+            .then(function( resource ) {
+                wall = resource;
+            })
+            .then(function() {
+                done();
+            })
+            .catch( done );
     });
 
     describe('adding walls', function() {
@@ -52,18 +62,20 @@ describe('Managing Walls', function() {
 
     describe('listing walls', function() {
 
+        before(function (done) {
+            var firstWall = services.addWall( { preventDefault: function(){}, target: { name: 'test wall three' } } );
+            var secondWall = services.addWall( { preventDefault: function(){}, target: { name: 'test wall two' } } );
+
+            RSVP.all( [ firstWall, secondWall ] )
+                .then(function() {
+                    done();
+                })
+                .catch( done );
+        });
+
         it('listing all walls for display in selector', function( done ) {
             services
-                .addWall( { preventDefault: function(){}, target: { name: 'test wall one' } } )
-                .then(function() {
-                    return services.addWall( { preventDefault: function(){}, target: { name: 'test wall two' } } );
-                })
-                .then(function() {
-                    return services.addWall( { preventDefault: function(){}, target: { name: 'test wall three' } } );
-                })
-                .then(function( wall ) {
-                    return services.openWallSelector( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } );
-                })
+                .openWallSelector( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } )
                 .then(function() {
                     interface.calllist.length.should.be.equal( 1 );
                     interface.calllist[0].call.should.be.equal( 'openWallSelector' );
@@ -84,16 +96,12 @@ describe('Managing Walls', function() {
     });
 
     describe('displaying walls', function() {
-        var storedId;
 
         it('blank wall', function( done ) {
-            services
-                .addWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
-                .then(function( wall ) {
-                    storedId = wall.getId();
+            var storedId = wall.getId();
 
-                    return services.displayWall( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } );
-                })
+            services
+                .displayWall( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } )
                 .then(function() {
                     interface.calllist.length.should.be.equal( 2 );
 
@@ -111,17 +119,12 @@ describe('Managing Walls', function() {
     });
 
     describe('opening walls for editing', function() {
-        var storedId, storedName;
 
         it('retreiving all data for displaying a wall editor', function( done ) {
-            services
-                .addWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
-                .then(function( wall ) {
-                    storedId = wall.getId();
-                    storedName = wall.getName();
+            var storedId = wall.getId(), storedName = wall.getName();
 
-                    return services.displayWallEditor( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } );
-                })
+            services
+                .displayWallEditor( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } )
                 .then(function( response ) {
                     interface.calllist.length.should.be.equal( 1 );
 
@@ -142,17 +145,13 @@ describe('Managing Walls', function() {
     describe('modifying wall data', function() {
 
         it('updating one wall', function( done ) {
-            services
-                .addWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
-                .then(function( resource ) {
-                    return queries.getAllWalls();
-                })
-                .then(function( resources ) {
-                    var update = resources[0];
-                    update.name = 'test wall modified';
+            var update = {
+                id: wall.getId()
+              , name: 'test wall modified'
+            };
 
-                    return services.modifyWall( { preventDefault: function(){}, target: update } );
-                })
+            services
+                .modifyWall( { preventDefault: function(){}, target: update } )
                 .then(function( resource ) {
                     should.exist( resource );
 
@@ -170,21 +169,30 @@ describe('Managing Walls', function() {
     afterEach(function (done) {
         interface.calllist = [];
 
-        queries.getAllWalls()
+        belt.findMany( 'wall' )
             .then(function( resources ) {
-                var promises = resources.map(function( resource ) {
-                    return belt.delete( 'wall', resource.getId() );
+                var promises = [];
+
+                resources.forEach(function( resource ) {
+                    if ( resource.getId() !== wall.getId() ) {
+                        promises.push( belt.delete( 'wall', resource.getId() ) );
+                    }
                 });
 
-                RSVP.all( promises )
-                    .then(function () {
-                        return queries.getAllWalls();
-                    })
-                    .then(function( resources ) {
-                        done();
-                    })
-                    .catch( done );
-            });
+                return RSVP.all( promises );
+            })
+            .then(function() {
+                done();
+            })
+            .catch( done );
+    });
+
+    after(function (done) {
+        belt.delete( 'wall', wall.getId() )
+            .then(function() {
+                done();
+            })
+            .catch( done );
     });
 
 });

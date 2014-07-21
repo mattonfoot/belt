@@ -9,9 +9,9 @@ var should = require('chai').should()
   , Services = require('./lib/services')
   , Wall = require('./lib/models/wall')
   , Board = require('./lib/models/board')
-  , Pocket = require('./lib/models/pocket');
+  , Region = require('./lib/models/region');
 
-describe('Managing Boards', function() {
+describe('Managing Regions', function() {
     var ids = {}
       , opts = {};
 
@@ -19,7 +19,7 @@ describe('Managing Boards', function() {
         opts.db = require('memdown');
     }
 
-    var belt = new Belt( 'belt_board_management_test', opts);
+    var belt = new Belt( 'belt_region_management_test', opts);
     var events = new Events();
     var interface = new Interface();
     var commands = new Commands( belt );
@@ -27,7 +27,7 @@ describe('Managing Boards', function() {
 
     var services = new Services( events, commands, queries, interface );
 
-    var wall, board;
+    var wall, board, region;
     before(function (done) {
         belt.resource( 'wall', Wall.constructor )
             .schema( Wall.schema )
@@ -41,11 +41,11 @@ describe('Managing Boards', function() {
             .beforeCreate( Board.onBeforeCreate )
             .beforeUpdate( Board.onBeforeUpdate );
 
-        belt.resource( 'pocket', Pocket.constructor )
-            .schema( Pocket.schema )
-            .validator( Pocket.validator )
-            .beforeCreate( Pocket.onBeforeCreate )
-            .beforeUpdate( Pocket.onBeforeUpdate );
+        belt.resource( 'region', Region.constructor )
+            .schema( Region.schema )
+            .validator( Region.validator )
+            .beforeCreate( Region.onBeforeCreate )
+            .beforeUpdate( Region.onBeforeUpdate );
 
         services
             .addWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
@@ -57,22 +57,27 @@ describe('Managing Boards', function() {
             .then(function( resource ) {
                 board = resource;
 
+                return services.addRegion( { preventDefault: function(){}, target: { board: board.getId(), label: 'test region', value: 'test value' } } );
+            })
+            .then(function( resource ) {
+                region = resource;
+
                 done();
             })
             .catch( done );
     });
 
-    describe('adding boards', function() {
+    describe('adding regions', function() {
 
-        it('adding a board to a wall', function( done ) {
+        it('adding a region to a board', function( done ) {
             services
-                .addBoard( { preventDefault: function(){}, target: { wall: wall.getId(), name: 'test board' } } )
+                .addRegion( { preventDefault: function(){}, target: { board: board.getId(), label: 'test region', value: 'test value' } } )
                 .then(function( resource ) {
                     should.exist( resource );
 
-                    resource.should.be.instanceOf( Board );
+                    resource.should.be.instanceOf( Region );
 
-                    resource.getWall().should.be.equal( wall.getId() );
+                    resource.getBoard().should.be.equal( board.getId() );
 
                     done();
                 })
@@ -81,22 +86,23 @@ describe('Managing Boards', function() {
 
     });
 
-    describe('opening boards for editing', function() {
+    describe('opening regions for editing', function() {
 
-        it('retreiving all data for displaying a board editor', function( done ) {
-            var storedId = board.getId(), storedName = board.getName();
+        it('retreiving all data for displaying a region editor', function( done ) {
+            var storedId = region.getId(), storedLabel = region.getLabel(), storedValue = region.getValue();
 
             services
-                .displayBoardEditor( { preventDefault: function(){}, target: { 'data-target': board.getId() } } )
+                .displayRegionEditor( { preventDefault: function(){}, target: { 'data-target': region.getId() } } )
                 .then(function( response ) {
                     interface.calllist.length.should.be.equal( 1 );
 
-                    interface.calllist[0].call.should.be.equal( 'displayBoardEditor' );
+                    interface.calllist[0].call.should.be.equal( 'displayRegionEditor' );
 
                     var data = interface.calllist[0].data;
 
                     data.id.should.be.equal( storedId );
-                    data.name.should.be.equal( storedName );
+                    data.label.should.be.equal( storedLabel );
+                    data.value.should.be.equal( storedValue );
 
                     done();
                 })
@@ -105,23 +111,23 @@ describe('Managing Boards', function() {
 
     });
 
-    describe('modifying board data', function() {
+    describe('modifying region data', function() {
 
-        it('updating one board', function( done ) {
+        it('updating one region', function( done ) {
             var update = {
-                id: board.getId()
-              , name: 'test board modified'
-              , wall: board.getWall()
+                id: region.getId()
+              , label: 'test region modified'
+              , board: region.getBoard()
             };
 
             services
-                .modifyBoard( { preventDefault: function(){}, target: update } )
+                .modifyRegion( { preventDefault: function(){}, target: update } )
                 .then(function( resource ) {
                     should.exist( resource );
 
-                    resource.should.be.instanceOf( Board );
+                    resource.should.be.instanceOf( Region );
 
-                    resource.getName().should.be.equal( 'test board modified' );
+                    resource.getLabel().should.be.equal( 'test region modified' );
 
                     done();
                 })
@@ -132,6 +138,35 @@ describe('Managing Boards', function() {
 
     afterEach(function (done) {
         interface.calllist = [];
+
+        belt.findMany( 'region' )
+            .then(function( resources ) {
+                var promises = [];
+
+                resources.forEach(function( resource ) {
+                    if ( resource.getId() !== region.getId() ) {
+                        promises.push( belt.delete( 'region', resource.getId() ) );
+                    }
+                });
+
+                return RSVP.all( promises );
+            })
+            .then(function() {
+                done();
+            })
+            .catch( done );
+    });
+
+    after(function (done) {
+
+        var removeWalls = belt.findMany( 'wall' )
+            .then(function( resources ) {
+                var promises = resources.map(function( resource ) {
+                    return belt.delete( 'wall', resource.getId() );
+                });
+
+                return RSVP.all( promises );
+            });
 
         var removeBoards = belt.findMany( 'board' )
             .then(function( resources ) {
@@ -146,34 +181,9 @@ describe('Managing Boards', function() {
                 return RSVP.all( promises );
             });
 
-        var removePockets = belt.findMany( 'pocket' )
-            .then(function( resources ) {
-                var promises = resources.map(function( resource ) {
-                    return belt.delete( 'pocket', resource.getId() );
-                });
+        var removeRegion = belt.delete( 'region', region.getId() );
 
-                return RSVP.all( promises );
-            });
-
-        RSVP.all( [ removeBoards, removePockets ] )
-            .then(function() {
-                done();
-            })
-            .catch( done );
-    });
-
-    after(function (done) {
-        belt.findMany( 'wall' )
-            .then(function( walls ) {
-                var promises = walls.map(function( wall ) {
-                    return belt.delete( 'wall', wall.getId() );
-                });
-
-                return RSVP.all( promises );
-            })
-            .then(function() {
-                return belt.delete( 'board', board.getId() );
-            })
+        RSVP.all( [ removeWalls, removeBoards, removeRegion ] )
             .then(function() {
                 done();
             })
