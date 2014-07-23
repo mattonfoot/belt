@@ -12,7 +12,7 @@ module.exports = function( config ) {
                 require : { jquery : 'jquery-browserify' }
             },
             files: {
-                'build/lib/app.js': [ 'tests/lib/app.js' ]
+                'build/lib/app.js': [ 'tests/lib/main.js' ]
             }
         }
     };

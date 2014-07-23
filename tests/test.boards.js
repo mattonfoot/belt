@@ -113,14 +113,15 @@ describe('Managing Boards', function() {
     describe('opening boards for editing', function() {
 
         it('retreiving all data for displaying a board editor', function( done ) {
-            var storedId = board.getId(), storedName = board.getName();
+            var storedId = board.getId(), storedName = board.getName(), eventCalled = false;
+
 
             queue
                 .on('boardeditor:display', function( board ) {
                     board.getId().should.be.equal( storedId );
                     board.getName().should.be.equal( storedName );
 
-                    done();
+                    eventCalled = true;
                 });
 
             services
@@ -128,6 +129,10 @@ describe('Managing Boards', function() {
                 .then(function( board ) {
                     board.getId().should.be.equal( storedId );
                     board.getName().should.be.equal( storedName );
+
+                    eventCalled.should.be.equal( true );
+
+                    done();
                 })
                 .catch( done );
         });
@@ -137,11 +142,25 @@ describe('Managing Boards', function() {
     describe('modifying board data', function() {
 
         it('updating one board', function( done ) {
+            var eventCalled = false;
+
             var update = {
                 id: board.getId()
               , name: 'test board modified'
               , wall: board.getWall()
             };
+
+            belt
+                .on('board:updated', function( board ) {
+                    should.exist( board );
+
+                    board.should.be.instanceOf( Board );
+
+                    board.getName().should.be.equal( 'test board modified' );
+
+                    eventCalled = true;
+                });
+
 
             services
                 .updateBoard( { preventDefault: function(){}, target: update } )
@@ -151,6 +170,8 @@ describe('Managing Boards', function() {
                     resource.should.be.instanceOf( Board );
 
                     resource.getName().should.be.equal( 'test board modified' );
+
+                    eventCalled.should.equal( true );
 
                     done();
                 })

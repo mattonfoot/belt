@@ -1,17 +1,17 @@
-var Belt = require('../lib/adapter')
+var Belt = require('../../lib/adapter')
 
 //  models
-  , Board = require('./lib/models/board')
-  , Card = require('./lib/models/card')
-  , Pocket = require('./lib/models/pocket')
-  , Region = require('./lib/models/region')
-  , Wall = require('./lib/models/wall')
+  , Board = require('../lib/models/board')
+  , Card = require('../lib/models/card')
+  , Pocket = require('../lib/models/pocket')
+  , Region = require('../lib/models/region')
+  , Wall = require('../lib/models/wall')
 
 //  system
-  , Commands = require('./lib/commands')
-  , Queries = require('./lib/queries')
-  , Interface = require('./lib/interface')
-  , Services = require('./lib/services');
+  , Commands = require('../lib/commands')
+  , Queries = require('../lib/queries')
+  , Interface = require('../lib/interface')
+  , Services = require('../lib/services');
 
 function Application( queue, options ) {
     this.options = options || {};
@@ -50,7 +50,7 @@ function Application( queue, options ) {
 
 
     function attachListenersToDb( type  ) {
-        listeners.each(function( listener ) {
+        listeners.forEach(function( listener ) {
             belt.on( type + ':' + listener, function( data ) {
                 queue.trigger( type + ':' + listener, data );
             });
