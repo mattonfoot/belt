@@ -14,30 +14,6 @@ function Region( data ) {
     }
 
     this.constructor = Region;
-/*
-    var region = this;
-
-    queue
-      .on( this, 'canvasregion:moved', function( data ) {
-        if ( region.id === data.region.id &&
-            ( region.x != data.x || region.y != data.y ) ) {
-          region.moveTo( data.x, data.y );
-        }
-      })
-      .on( this, 'canvasregion:resized', function( data ) {
-        if ( region.id === data.region.id &&
-            ( region.width != data.width || region.height != data.height ) ) {
-          region.resizeTo( data.width, data.height );
-        }
-      })
-      .on( this, 'region:updated', function( data ) {
-        if ( region.id === data.id &&
-            ( region.width != data.width || region.height != data.height || region.x != data.x || region.y != data.y ) ) {
-          region.moveTo( data.x, data.y );
-          region.resizeTo( data.width, data.height );
-        }
-      });
-*/
 }
 
 Region.prototype.getId = function() {

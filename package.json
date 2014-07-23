@@ -44,6 +44,7 @@
     "grunt-coveralls": "*",
     "grunt-mocha": "*",
     "grunt-mocha-test": "*",
+    "jquery-browserify": "^1.8.1",
     "load-grunt-tasks": "*",
     "memdown": "*",
     "mocha": "*",

@@ -12,29 +12,6 @@ function Card( data ) {
     }
 
     this.constructor = Card;
-/*
-    var card = this;
-
-    queue
-      .on( this, 'canvascard:moved', function( data ) {
-        if ( card.id === data.card.id &&
-            ( card.x != data.x || card.y != data.y ) ) {
-          card.moveTo( data.x, data.y );
-        }
-      })
-      .on( this, 'card:moved', function( data ) {
-        if ( card.id === data.id &&
-            ( card.x != data.x || card.y != data.y ) ) {
-          card.moveTo( data.x, data.y );
-        }
-      })
-      .on( this, 'card:updated', function( data ) {
-        if ( card.id === data.id &&
-            ( card.x != data.x || card.y != data.y ) ) {
-          card.moveTo( data.x, data.y );
-        }
-      });
-*/
 }
 
 Card.prototype.getId = function() {

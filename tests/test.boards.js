@@ -2,14 +2,16 @@ var should = require('chai').should()
   , RSVP = require('rsvp')
   , Promise = RSVP.Promise
   , Belt = require('../lib/adapter')
+  , Queue = require('./lib/queue')
   , Commands = require('./lib/commands')
   , Queries = require('./lib/queries')
-  , Events = require('./lib/events')
   , Interface = require('./lib/interface')
   , Services = require('./lib/services')
   , Wall = require('./lib/models/wall')
   , Board = require('./lib/models/board')
-  , Pocket = require('./lib/models/pocket');
+  , Region = require('./lib/models/region')
+  , Pocket = require('./lib/models/pocket')
+  , Card = require('./lib/models/card');
 
 describe('Managing Boards', function() {
     var ids = {}
@@ -20,12 +22,12 @@ describe('Managing Boards', function() {
     }
 
     var belt = new Belt( 'belt_board_management_test', opts);
-    var events = new Events();
-    var interface = new Interface();
+    var queue = new Queue();
+    var interface = new Interface( queue );
     var commands = new Commands( belt );
     var queries = new Queries( belt );
 
-    var services = new Services( events, commands, queries, interface );
+    var services = new Services( interface, commands, queries );
 
     var wall, board;
     before(function (done) {
@@ -35,11 +37,17 @@ describe('Managing Boards', function() {
             .beforeCreate( Wall.onBeforeCreate )
             .beforeUpdate( Wall.onBeforeUpdate );
 
-        belt.schema( 'board', Board.schema )
-            .resource( Board.constructor )
+        belt.resource( 'board', Board.constructor )
+            .schema( Board.schema )
             .validator( Board.validator )
             .beforeCreate( Board.onBeforeCreate )
             .beforeUpdate( Board.onBeforeUpdate );
+
+        belt.resource( 'region', Region.constructor )
+            .schema( Region.schema )
+            .validator( Region.validator )
+            .beforeCreate( Region.onBeforeCreate )
+            .beforeUpdate( Region.onBeforeUpdate );
 
         belt.resource( 'pocket', Pocket.constructor )
             .schema( Pocket.schema )
@@ -47,12 +55,18 @@ describe('Managing Boards', function() {
             .beforeCreate( Pocket.onBeforeCreate )
             .beforeUpdate( Pocket.onBeforeUpdate );
 
+        belt.resource( 'card', Card.constructor )
+            .schema( Card.schema )
+            .validator( Card.validator )
+            .beforeCreate( Card.onBeforeCreate )
+            .beforeUpdate( Card.onBeforeUpdate );
+
         services
-            .addWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+            .createWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
             .then(function( resource ) {
                 wall = resource;
 
-                return services.addBoard( { preventDefault: function(){}, target: { wall: wall.getId(), name: 'test board' } } );
+                return services.createBoard( { preventDefault: function(){}, target: { wall: wall.getId(), name: 'test board' } } );
             })
             .then(function( resource ) {
                 board = resource;
@@ -65,14 +79,29 @@ describe('Managing Boards', function() {
     describe('adding boards', function() {
 
         it('adding a board to a wall', function( done ) {
+            var eventCalled = false;
+
+            belt
+                .on('board:created', function( resource ) {
+                    should.exist( resource );
+
+                    resource.should.be.instanceOf( Board );
+
+                    resource.getWall().should.be.equal( wall.getId() );
+
+                    eventCalled = true;
+                });
+
             services
-                .addBoard( { preventDefault: function(){}, target: { wall: wall.getId(), name: 'test board' } } )
+                .createBoard( { preventDefault: function(){}, target: { wall: wall.getId(), name: 'test board' } } )
                 .then(function( resource ) {
                     should.exist( resource );
 
                     resource.should.be.instanceOf( Board );
 
                     resource.getWall().should.be.equal( wall.getId() );
+
+                    eventCalled.should.be.equal( true );
 
                     done();
                 })
@@ -86,19 +115,19 @@ describe('Managing Boards', function() {
         it('retreiving all data for displaying a board editor', function( done ) {
             var storedId = board.getId(), storedName = board.getName();
 
-            services
-                .displayBoardEditor( { preventDefault: function(){}, target: { 'data-target': board.getId() } } )
-                .then(function( response ) {
-                    interface.calllist.length.should.be.equal( 1 );
-
-                    interface.calllist[0].call.should.be.equal( 'displayBoardEditor' );
-
-                    var data = interface.calllist[0].data;
-
-                    data.id.should.be.equal( storedId );
-                    data.name.should.be.equal( storedName );
+            queue
+                .on('boardeditor:display', function( board ) {
+                    board.getId().should.be.equal( storedId );
+                    board.getName().should.be.equal( storedName );
 
                     done();
+                });
+
+            services
+                .editBoard( { preventDefault: function(){}, target: { 'data-target': board.getId() } } )
+                .then(function( board ) {
+                    board.getId().should.be.equal( storedId );
+                    board.getName().should.be.equal( storedName );
                 })
                 .catch( done );
         });
@@ -115,7 +144,7 @@ describe('Managing Boards', function() {
             };
 
             services
-                .modifyBoard( { preventDefault: function(){}, target: update } )
+                .updateBoard( { preventDefault: function(){}, target: update } )
                 .then(function( resource ) {
                     should.exist( resource );
 
@@ -131,7 +160,7 @@ describe('Managing Boards', function() {
     });
 
     afterEach(function (done) {
-        interface.calllist = [];
+        queue.clearAll();
 
         var removeBoards = belt.findMany( 'board' )
             .then(function( resources ) {

@@ -2,13 +2,16 @@ var should = require('chai').should()
   , RSVP = require('rsvp')
   , Promise = RSVP.Promise
   , Belt = require('../lib/adapter')
+  , Queue = require('./lib/queue')
   , Commands = require('./lib/commands')
   , Queries = require('./lib/queries')
-  , Events = require('./lib/events')
   , Interface = require('./lib/interface')
   , Services = require('./lib/services')
   , Wall = require('./lib/models/wall')
-  , Pocket = require('./lib/models/pocket');
+  , Board = require('./lib/models/board')
+  , Region = require('./lib/models/region')
+  , Pocket = require('./lib/models/pocket')
+  , Card = require('./lib/models/card');
 
 describe('Managing Pockets', function() {
     var ids = {}
@@ -19,12 +22,12 @@ describe('Managing Pockets', function() {
     }
 
     var belt = new Belt( 'belt_pocket_management_test', opts);
-    var events = new Events();
-    var interface = new Interface();
+    var queue = new Queue();
+    var interface = new Interface( queue );
     var commands = new Commands( belt );
     var queries = new Queries( belt );
 
-    var services = new Services( events, commands, queries, interface );
+    var services = new Services( interface, commands, queries );
 
     var wall, pocket;
     before(function (done) {
@@ -34,18 +37,36 @@ describe('Managing Pockets', function() {
             .beforeCreate( Wall.onBeforeCreate )
             .beforeUpdate( Wall.onBeforeUpdate );
 
+        belt.schema( 'board', Board.schema )
+            .resource( Board.constructor )
+            .validator( Board.validator )
+            .beforeCreate( Board.onBeforeCreate )
+            .beforeUpdate( Board.onBeforeUpdate );
+
+        belt.resource( 'region', Region.constructor )
+            .schema( Region.schema )
+            .validator( Region.validator )
+            .beforeCreate( Region.onBeforeCreate )
+            .beforeUpdate( Region.onBeforeUpdate );
+
         belt.resource( 'pocket', Pocket.constructor )
             .schema( Pocket.schema )
             .validator( Pocket.validator )
             .beforeCreate( Pocket.onBeforeCreate )
             .beforeUpdate( Pocket.onBeforeUpdate );
 
+        belt.resource( 'card', Card.constructor )
+            .schema( Card.schema )
+            .validator( Card.validator )
+            .beforeCreate( Card.onBeforeCreate )
+            .beforeUpdate( Card.onBeforeUpdate );
+
         services
-            .addWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+            .createWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
             .then(function( resource ) {
                 wall = resource;
 
-                return services.addPocket( { preventDefault: function(){}, target: { wall: wall.getId(), title: 'test pocket' } } );
+                return services.createPocket( { preventDefault: function(){}, target: { wall: wall.getId(), title: 'test pocket' } } );
             })
             .then(function( resource ) {
                 pocket = resource;
@@ -58,8 +79,9 @@ describe('Managing Pockets', function() {
     describe('adding pockets', function() {
 
         it('adding a pocket to a wall', function( done ) {
+
             services
-                .addPocket( { preventDefault: function(){}, target: { wall: wall.getId(), title: 'test pocket' } } )
+                .createPocket( { preventDefault: function(){}, target: { wall: wall.getId(), title: 'test pocket' } } )
                 .then(function( resource ) {
                     should.exist( resource );
 
@@ -80,16 +102,10 @@ describe('Managing Pockets', function() {
             var storedId = pocket.getId(), storedTitle = pocket.getTitle();
 
             services
-                .displayPocketEditor( { preventDefault: function(){}, target: { 'data-target': pocket.getId() } } )
-                .then(function( response ) {
-                    interface.calllist.length.should.be.equal( 1 );
-
-                    interface.calllist[0].call.should.be.equal( 'displayPocketEditor' );
-
-                    var data = interface.calllist[0].data;
-
-                    data.id.should.be.equal( storedId );
-                    data.title.should.be.equal( storedTitle );
+                .editPocket( { preventDefault: function(){}, target: { 'data-target': pocket.getId() } } )
+                .then(function( pocket ) {
+                    pocket.getId().should.be.equal( storedId );
+                    pocket.getTitle().should.be.equal( storedTitle );
 
                     done();
                 })
@@ -108,7 +124,7 @@ describe('Managing Pockets', function() {
             };
 
             services
-                .modifyPocket( { preventDefault: function(){}, target: update } )
+                .updatePocket( { preventDefault: function(){}, target: update } )
                 .then(function( resource ) {
                     should.exist( resource );
 
@@ -124,7 +140,7 @@ describe('Managing Pockets', function() {
     });
 
     afterEach(function (done) {
-        interface.calllist = [];
+        queue.clearAll();
 
         belt.findMany( 'pocket' )
             .then(function( resources ) {

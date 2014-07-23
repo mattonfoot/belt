@@ -7,84 +7,64 @@ function Commands( adapter ) {
     this._db = adapter;
 }
 
-Commands.prototype.addWall = function( data ) {
-    return this._db.create( 'wall', data );
+Commands.prototype.createBoard = function( data ) {
+    return this._db.create( 'board', data ); // --> board:created
 };
 
-Commands.prototype.modifyWall = function( data ) {
-    return this._db.update( 'wall', data );
+Commands.prototype.updateBoard = function( data ) {
+    return this._db.update( 'board', data ); // --> board:updated
 };
 
-Commands.prototype.addBoard = function( data ) {
-    return this._db.create( 'board', data );
+Commands.prototype.createCard = function( data ) {
+    return this._db.create( 'card', data ); // --> card:created
 };
 
-Commands.prototype.modifyBoard = function( data ) {
-    return this._db.update( 'board', data );
+Commands.prototype.updateCard = function( data ) {
+    return this._db.update( 'card', data ); // --> card:updated
 };
 
-Commands.prototype.addRegion = function( data ) {
-    return this._db.create( 'region', data );
+Commands.prototype.createPocket = function( data ) {
+    return this._db.create( 'pocket', data ); // --> pocket:created
 };
 
-Commands.prototype.modifyRegion = function( data ) {
-    return this._db.update( 'region', data );
+Commands.prototype.updatePocket = function( data ) {
+    return this._db.update( 'pocket', data ); // --> pocket:updated
 };
 
-Commands.prototype.addPocket = function( data ) {
-    return this._db.create( 'pocket', data );
+Commands.prototype.createRegion = function( data ) {
+    return this._db.create( 'region', data ); // --> region:created
 };
 
-Commands.prototype.modifyPocket = function( data ) {
-    return this._db.update( 'pocket', data );
+Commands.prototype.updateRegion = function( data ) {
+    return this._db.update( 'region', data ); // --> region:updated
+};
+
+Commands.prototype.createWall = function( data ) {
+    return this._db.create( 'wall', data ); // --> wall:created
+};
+
+Commands.prototype.updateWall = function( data ) {
+    return this._db.update( 'wall', data ); // --> wall:updated
 };
 
 Commands.prototype.addPocketsToBoard = function( board, pockets ) {
+    var _this = this;
+
     var promises = pockets.map(function( pocket ) {
-        return Commands.addCard( board.getId(), pocket.getId() );
+        return _this.createCard( board.getId(), pocket.getId() );
     });
 
     return RSVP.all( promises );
 };
 
-/*
-Commands.prototype.addPocketToBoards = function( pocket ) {
-    return new Promise(function( resolve, reject ) {
-        Queries.getAllBoardsForWall( pocket.getWall() )
-            .then(function( boards ) {
-                var promises = boards.map(function( board ) {
-                    return Commands.addCard( board.getId(), pocket.getId() );
-                });
+Commands.prototype.addPocketToBoards = function( boards, pocket ) {
+    var _this = this;
 
-                return RSVP.all( promises )
-                    .then( resolve )
-                    .catch( reject );
-            });
+    var promises = boards.map(function( board ) {
+        return _this.createCard( board.getId(), pocket.getId() );
     });
+
+    return RSVP.all( promises );
 };
 
-Commands.prototype.addCard = function( data ) {
-
-};
-
-Commands.prototype.moveCard = function( data ) {
-
-};
-
-Commands.prototype.addRegion = function( data ) {
-
-};
-
-Commands.prototype.modifyRegion = function( data ) {
-
-};
-
-Commands.prototype.moveRegion = function( data ) {
-
-};
-
-Commands.prototype.resizeRegion = function( data ) {
-
-};
-*/
 module.exports = Commands;

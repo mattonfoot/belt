@@ -2,9 +2,9 @@ var should = require('chai').should()
   , RSVP = require('rsvp')
   , Promise = RSVP.Promise
   , Belt = require('../lib/adapter')
+  , Queue = require('./lib/queue')
   , Commands = require('./lib/commands')
   , Queries = require('./lib/queries')
-  , Events = require('./lib/events')
   , Interface = require('./lib/interface')
   , Services = require('./lib/services')
   , Wall = require('./lib/models/wall');
@@ -18,12 +18,12 @@ describe('Managing Walls', function() {
     }
 
     var belt = new Belt( 'belt_wall_management_test', opts);
-    var events = new Events();
-    var interface = new Interface();
+    var queue = new Queue();
+    var interface = new Interface( queue );
     var commands = new Commands( belt );
     var queries = new Queries( belt );
 
-    var services = new Services( events, commands, queries, interface );
+    var services = new Services( interface, commands, queries );
 
     var wall;
     before(function (done) {
@@ -33,7 +33,7 @@ describe('Managing Walls', function() {
             .beforeCreate( Wall.onBeforeCreate )
             .beforeUpdate( Wall.onBeforeUpdate );
 
-        services.addWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+        services.createWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
             .then(function( resource ) {
                 wall = resource;
             })
@@ -47,7 +47,7 @@ describe('Managing Walls', function() {
 
         it('adding one wall', function( done ) {
             services
-                .addWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+                .createWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
                 .then(function( resource ) {
                     should.exist( resource );
 
@@ -63,8 +63,8 @@ describe('Managing Walls', function() {
     describe('listing walls', function() {
 
         before(function (done) {
-            var firstWall = services.addWall( { preventDefault: function(){}, target: { name: 'test wall three' } } );
-            var secondWall = services.addWall( { preventDefault: function(){}, target: { name: 'test wall two' } } );
+            var firstWall = services.createWall( { preventDefault: function(){}, target: { name: 'test wall three' } } );
+            var secondWall = services.createWall( { preventDefault: function(){}, target: { name: 'test wall two' } } );
 
             RSVP.all( [ firstWall, secondWall ] )
                 .then(function() {
@@ -74,22 +74,18 @@ describe('Managing Walls', function() {
         });
 
         it('listing all walls for display in selector', function( done ) {
-            services
-                .openWallSelector( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } )
-                .then(function() {
-                    interface.calllist.length.should.be.equal( 1 );
-                    interface.calllist[0].call.should.be.equal( 'openWallSelector' );
 
-                    var data = interface.calllist[0].data;
-
-                    data.length.should.be.equal( 3 );
-
-                    data.forEach(function( resource ) {
+            queue
+                .on( 'wallselector:display', function( walls ) {
+                    walls.forEach(function( resource ) {
                         resource.should.be.instanceOf( Wall );
                     });
 
                     done();
-                })
+                });
+
+            services
+                .selectWall( { preventDefault: function(){} } )
                 .catch( done );
         });
 
@@ -98,21 +94,29 @@ describe('Managing Walls', function() {
     describe('displaying walls', function() {
 
         it('blank wall', function( done ) {
-            var storedId = wall.getId();
+            var storedId = wall.getId(), storedName = wall.getName(), displayCalled = false;
+
+            queue
+                .on( 'wall:display', function( wall ) {
+                    displayCalled.should.not.be.equal( true );
+                    displayCalled = true;
+
+                    wall.getId().should.be.equal( storedId );
+                    wall.getName().should.be.equal( storedName );
+                });
+
+            queue
+                .on( 'wall:firsttime', function( wall ) {
+                    displayCalled.should.be.equal( true );
+
+                    wall.getId().should.be.equal( storedId );
+                    wall.getName().should.be.equal( storedName );
+
+                    done();
+                });
 
             services
                 .displayWall( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } )
-                .then(function() {
-                    interface.calllist.length.should.be.equal( 2 );
-
-                    interface.calllist[0].call.should.be.equal( 'buildWall' );
-                    interface.calllist[0].data.id.should.be.equal( storedId );
-
-                    interface.calllist[1].call.should.be.equal( 'displayWall' );
-                    interface.calllist[1].data.id.should.be.equal( storedId );
-
-                    done();
-                })
                 .catch( done );
         });
 
@@ -123,20 +127,20 @@ describe('Managing Walls', function() {
         it('retreiving all data for displaying a wall editor', function( done ) {
             var storedId = wall.getId(), storedName = wall.getName();
 
-            services
-                .displayWallEditor( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } )
-                .then(function( response ) {
-                    interface.calllist.length.should.be.equal( 1 );
+            queue
+                .on( 'wallselector:display', function( walls ) {
+                    walls.length.should.be.equal( 1 );
 
-                    interface.calllist[0].call.should.be.equal( 'displayWallEditor' );
+                    var wall = walls[0];
 
-                    var data = interface.calllist[0].data;
-
-                    data.id.should.be.equal( storedId );
-                    data.name.should.be.equal( storedName );
+                    wall.getId().should.be.equal( storedId );
+                    wall.getName().should.be.equal( storedName );
 
                     done();
-                })
+                });
+
+            services
+                .selectWall( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } )
                 .catch( done );
         });
 
@@ -151,7 +155,7 @@ describe('Managing Walls', function() {
             };
 
             services
-                .modifyWall( { preventDefault: function(){}, target: update } )
+                .updateWall( { preventDefault: function(){}, target: update } )
                 .then(function( resource ) {
                     should.exist( resource );
 
@@ -167,7 +171,7 @@ describe('Managing Walls', function() {
     });
 
     afterEach(function (done) {
-        interface.calllist = [];
+        queue.clearAll();
 
         belt.findMany( 'wall' )
             .then(function( resources ) {

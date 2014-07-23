@@ -2,14 +2,16 @@ var should = require('chai').should()
   , RSVP = require('rsvp')
   , Promise = RSVP.Promise
   , Belt = require('../lib/adapter')
+  , Queue = require('./lib/queue')
   , Commands = require('./lib/commands')
   , Queries = require('./lib/queries')
-  , Events = require('./lib/events')
   , Interface = require('./lib/interface')
   , Services = require('./lib/services')
   , Wall = require('./lib/models/wall')
   , Board = require('./lib/models/board')
-  , Region = require('./lib/models/region');
+  , Region = require('./lib/models/region')
+  , Pocket = require('./lib/models/pocket')
+  , Card = require('./lib/models/card');
 
 describe('Managing Regions', function() {
     var ids = {}
@@ -20,12 +22,12 @@ describe('Managing Regions', function() {
     }
 
     var belt = new Belt( 'belt_region_management_test', opts);
-    var events = new Events();
-    var interface = new Interface();
+    var queue = new Queue();
+    var interface = new Interface( queue );
     var commands = new Commands( belt );
     var queries = new Queries( belt );
 
-    var services = new Services( events, commands, queries, interface );
+    var services = new Services( interface, commands, queries );
 
     var wall, board, region;
     before(function (done) {
@@ -47,19 +49,32 @@ describe('Managing Regions', function() {
             .beforeCreate( Region.onBeforeCreate )
             .beforeUpdate( Region.onBeforeUpdate );
 
+        belt.resource( 'pocket', Pocket.constructor )
+            .schema( Pocket.schema )
+            .validator( Pocket.validator )
+            .beforeCreate( Pocket.onBeforeCreate )
+            .beforeUpdate( Pocket.onBeforeUpdate );
+
+        belt.resource( 'card', Card.constructor )
+            .schema( Card.schema )
+            .validator( Card.validator )
+            .beforeCreate( Card.onBeforeCreate )
+            .beforeUpdate( Card.onBeforeUpdate );
+
         services
-            .addWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+            .createWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
             .then(function( resource ) {
                 wall = resource;
 
-                return services.addBoard( { preventDefault: function(){}, target: { wall: wall.getId(), name: 'test board' } } );
+                return services.createBoard( { preventDefault: function(){}, target: { wall: wall.getId(), name: 'test board' } } );
             })
             .then(function( resource ) {
                 board = resource;
 
-                return services.addRegion( { preventDefault: function(){}, target: { board: board.getId(), label: 'test region', value: 'test value' } } );
+                return services.createRegion( { preventDefault: function(){}, target: { board: board.getId(), label: 'test region', value: 'test value' } } );
             })
             .then(function( resource ) {
+
                 region = resource;
 
                 done();
@@ -70,9 +85,9 @@ describe('Managing Regions', function() {
     describe('adding regions', function() {
 
         it('adding a region to a board', function( done ) {
-            services
-                .addRegion( { preventDefault: function(){}, target: { board: board.getId(), label: 'test region', value: 'test value' } } )
-                .then(function( resource ) {
+
+            belt
+                .on('region:created', function( resource ) {
                     should.exist( resource );
 
                     resource.should.be.instanceOf( Region );
@@ -80,6 +95,16 @@ describe('Managing Regions', function() {
                     resource.getBoard().should.be.equal( board.getId() );
 
                     done();
+                });
+
+            services
+                .createRegion( { preventDefault: function(){}, target: { board: board.getId(), label: 'test region', value: 'test value' } } )
+                .then(function( resource ) {
+                    should.exist( resource );
+
+                    resource.should.be.instanceOf( Region );
+
+                    resource.getBoard().should.be.equal( board.getId() );
                 })
                 .catch( done );
         });
@@ -91,20 +116,22 @@ describe('Managing Regions', function() {
         it('retreiving all data for displaying a region editor', function( done ) {
             var storedId = region.getId(), storedLabel = region.getLabel(), storedValue = region.getValue();
 
-            services
-                .displayRegionEditor( { preventDefault: function(){}, target: { 'data-target': region.getId() } } )
-                .then(function( response ) {
-                    interface.calllist.length.should.be.equal( 1 );
+            queue
+                .on('regioneditor:display', function( region ) {
 
-                    interface.calllist[0].call.should.be.equal( 'displayRegionEditor' );
-
-                    var data = interface.calllist[0].data;
-
-                    data.id.should.be.equal( storedId );
-                    data.label.should.be.equal( storedLabel );
-                    data.value.should.be.equal( storedValue );
+                    region.getId().should.be.equal( storedId );
+                    region.getLabel().should.be.equal( storedLabel );
+                    region.getValue().should.be.equal( storedValue );
 
                     done();
+                });
+
+            services
+                .editRegion( { preventDefault: function(){}, target: { 'data-target': region.getId() } } )
+                .then(function( data ) {
+                    data.getId().should.be.equal( storedId );
+                    data.getLabel().should.be.equal( storedLabel );
+                    data.getValue().should.be.equal( storedValue );
                 })
                 .catch( done );
         });
@@ -120,9 +147,8 @@ describe('Managing Regions', function() {
               , board: region.getBoard()
             };
 
-            services
-                .modifyRegion( { preventDefault: function(){}, target: update } )
-                .then(function( resource ) {
+            belt
+                .on('region:updated', function( resource ) {
                     should.exist( resource );
 
                     resource.should.be.instanceOf( Region );
@@ -130,6 +156,16 @@ describe('Managing Regions', function() {
                     resource.getLabel().should.be.equal( 'test region modified' );
 
                     done();
+                });
+
+            services
+                .updateRegion( { preventDefault: function(){}, target: update } )
+                .then(function( resource ) {
+                    should.exist( resource );
+
+                    resource.should.be.instanceOf( Region );
+
+                    resource.getLabel().should.be.equal( 'test region modified' );
                 })
                 .catch( done );
         });
@@ -137,7 +173,7 @@ describe('Managing Regions', function() {
     });
 
     afterEach(function (done) {
-        interface.calllist = [];
+        queue.clearAll();
 
         belt.findMany( 'region' )
             .then(function( resources ) {
