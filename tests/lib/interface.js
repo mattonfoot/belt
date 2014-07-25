@@ -13,6 +13,8 @@ Interface.prototype.addBoard = function( board ) {
 };
 
 Interface.prototype.displayBoard = function( board ) {
+    if ( !this._wall || board.getWall() !== this._wall.getId() ) return;
+
     this._board = board;
     this._regions = [];
     this._cards = [];
@@ -37,7 +39,7 @@ Interface.prototype.displayBoardSelector = function( boards ) {
 // cards
 
 Interface.prototype.displayCard = function( card ) {
-    if (~this._cards.indexOf( card.getId() )) return;
+    if ( !this._board || card.getBoard() !== this._board.getId() || ~this._cards.indexOf( card.getId() )) return;
 
     this._cards.push( card.getId() );
 
@@ -63,7 +65,7 @@ Interface.prototype.displayPocketEditor = function( pocket ) {
 // regions
 
 Interface.prototype.displayRegion = function( region ) {
-    if (~this._regions.indexOf( region.getId() )) return;
+    if ( !this._board || region.getBoard() !== this._board.getId() || ~this._regions.indexOf( region.getId() )) return;
 
     this._regions.push( region.getId() );
 

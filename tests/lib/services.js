@@ -56,6 +56,7 @@ Services.prototype.updateBoard = function( data ) {
 };
 
 // board:display
+// board:created
 Services.prototype.displayBoard = function( id ) {
     var _this = this;
 
@@ -65,6 +66,67 @@ Services.prototype.displayBoard = function( id ) {
             _this._interface.displayBoard( board );  // --> board:displayed
 
             return board;
+        });
+};
+
+// board:select
+Services.prototype.selectBoard = function( wall ) {
+    var _this = this;
+
+    return this._queries
+        .getBoardsForWall( wall )
+        .then(function( boards ) {
+            _this._interface.displayBoardSelector( boards );  // --> boardselector:displayed
+
+            return boards;
+        });
+};
+
+// card:created
+Services.prototype.displayCard = function( id ) {
+    return this._queries
+        .getCard( id )
+        .then(function( card ) {
+            this._interface.displayCard( card );  // --> card:displayed
+
+            return card;
+        });
+};
+
+// board:displayed
+Services.prototype.displayCards = function( board ) {
+    var _this = this;
+
+    return this._queries
+        .getCardsForBoard( board )
+        .then(function( cards ) {
+            _this._interface.displayCards( cards );  // --> card:displayed
+
+            return cards;
+        });
+};
+
+// region:created
+Services.prototype.displayRegion = function( id ) {
+    return this._queries
+        .getRegion( id )
+        .then(function( region ) {
+            this._interface.displayRegion( region );  // --> region:displayed
+
+            return region;
+        });
+};
+
+// board:displayed
+Services.prototype.displayRegions = function( board ) {
+    var _this = this;
+
+    return this._queries
+        .getRegionsForBoard( board )
+        .then(function( regions ) {
+            _this._interface.displayRegions( regions );  // --> region:displayed
+
+            return regions;
         });
 };
 
@@ -228,6 +290,7 @@ Services.prototype.selectWall = function( id ) {
 };
 
 // wall:display
+// wall:created
 Services.prototype.displayWall = function( id ) {
     var _this = this, wall;
 
@@ -235,7 +298,7 @@ Services.prototype.displayWall = function( id ) {
         .then(function( resource ) {
             wall = resource;
 
-            _this._interface.displayWall( wall );  // --> wall:display
+            _this._interface.displayWall( wall );  // --> wall:displayed
 
             if ( !wall.boards.length ) {
                 _this._interface.notifyWallFirstTime( wall );  // --> wall:firsttime
@@ -244,7 +307,9 @@ Services.prototype.displayWall = function( id ) {
             return _this.selectBoard( wall );
         })
         .then(function( boards ) {
-            _this._interface.displayBoard( boards[0] );  // --> board:displayed
+            if (boards.length) {
+                _this._interface.displayBoard( boards[0] );  // --> board:displayed
+            }
 
             return wall;
         });
@@ -263,55 +328,6 @@ Services.prototype.unlinkTransform = function( id ) {
             _this._interface.removeTransform( transform );
 
             return transform;
-        });
-};
-
-// board:select
-Services.prototype.selectBoard = function( wall ) {
-    var _this = this;
-
-    return this._queries
-        .getBoardsForWall( wall )
-        .then(function( boards ) {
-            _this._interface.displayBoardSelector( boards );  // --> boardselector:displayed
-
-            return boards;
-        });
-};
-
-// card:created
-Services.prototype.displayCard = function( card ) {
-    return this._interface.displayCard( card );  // --> card:displayed
-};
-
-// board:displayed
-Services.prototype.displayCards = function( board ) {
-    var _this = this;
-
-    return this._queries
-        .getCardsForBoard( board )
-        .then(function( cards ) {
-            _this._interface.displayCards( cards );  // --> card:displayed
-
-            return cards;
-        });
-};
-
-// card:created
-Services.prototype.displayRegion = function( region ) {
-    return this._interface.displayRegion( region );  // --> region:displayed
-};
-
-// board:displayed
-Services.prototype.displayRegions = function( board ) {
-    var _this = this;
-
-    return this._queries
-        .getRegionsForBoard( board )
-        .then(function( regions ) {
-            _this._interface.displayRegions( regions );  // --> region:displayed
-
-            return regions;
         });
 };
 

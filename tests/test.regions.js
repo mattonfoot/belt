@@ -195,17 +195,24 @@ describe('Managing Regions', function() {
 
     after(function (done) {
 
+        var promises = [];
+
         var removeWalls = belt.findMany( 'wall' )
             .then(function( resources ) {
+                if (!resources.length) return;
+
                 var promises = resources.map(function( resource ) {
                     return belt.delete( 'wall', resource.getId() );
                 });
 
                 return RSVP.all( promises );
             });
+        promises.push( removeWalls );
 
         var removeBoards = belt.findMany( 'board' )
             .then(function( resources ) {
+                if (!resources.length) return;
+                  
                 var promises = [];
 
                 resources.forEach(function( resource ) {
@@ -216,10 +223,15 @@ describe('Managing Regions', function() {
 
                 return RSVP.all( promises );
             });
+        promises.push( removeBoards );
 
-        var removeRegion = belt.delete( 'region', region.getId() );
+        if (region) {
+            var removeRegion = belt.delete( 'region', region.getId() );
 
-        RSVP.all( [ removeWalls, removeBoards, removeRegion ] )
+            promises.push( removeRegion );
+        }
+
+        RSVP.all( promises )
             .then(function() {
                 done();
             })

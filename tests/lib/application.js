@@ -23,6 +23,8 @@ function Application( queue, ui, options ) {
     // initialize the services
     var services = this.services = new Services( ui, new Commands( belt ), new Queries( belt ) );
 
+    this._listen = true;
+
     var factories = {
         "Board": Board
       , "Card": Card
@@ -58,6 +60,8 @@ function Application( queue, ui, options ) {
 
     this.constructor = Application;
 
+    var _this = this;
+
     // setup events to trigger services
 
     var listeners2 = [ 'new', 'create', 'edit', 'update', 'select', 'display', 'unlink', 'move', 'resize' ];
@@ -69,36 +73,64 @@ function Application( queue, ui, options ) {
     function setUpEventListeners( type ) {
         listeners2.forEach(function( task ) {
             queue.on( type.toLowerCase() + ':' + task, function( ev ) {
-                if (services[ task + type ]) {
-                    if (options.debug) {
-                        console.log( 'services.' + task + type + '()' );
-                    }
-                    
-                    services[ task + type ]( ev );
+                if (!_this._listen || !services[ task + type ]) return;
+
+                if (options.debug) {
+                    console.log( 'services.' + task + type + '()' );
                 }
+
+                services[ task + type ]( ev );
             });
         });
     }
 
     queue
         .on('board:displayed', function( board ) {
+            if (!_this._listen) return;
+
             services.displayCards( board );
             services.displayRegions( board );
         })
 
         .on('wall:firsttime', function( wall ) {
+            if (!_this._listen) return;
+
             services.newBoard();
         })
 
+        .on('wall:created', function( wall ) {
+            if (!_this._listen) return;
+
+            services.displayWall( wall.getId() );
+        })
+
+        .on('board:created', function( board ) {
+            if (!_this._listen) return;
+
+            services.displayBoard( board.getId() );
+        })
+
         .on('region:created', function( region ) {
-            services.displayRegion( region );
+            if (!_this._listen) return;
+
+            services.displayRegion( region.getId() );
         })
 
         .on('card:created', function( card ) {
-            services.displayCard( card );
+            if (!_this._listen) return;
+
+            services.displayCard( card.getId() );
         })
 
         ;
 }
+
+Application.prototype.pauseListenting = function() {
+    this._listen = false;
+};
+
+Application.prototype.startListening = function() {
+    this._listen = true;
+};
 
 module.exports = Application;
