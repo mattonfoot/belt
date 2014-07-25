@@ -13,7 +13,7 @@ var should = require('chai').should()
   , Pocket = require('./lib/models/pocket')
   , Card = require('./lib/models/card');
 
-describe('Managing Regions', function() {
+describe('using an adapter', function() {
     var ids = {}
       , opts = {};
 
@@ -212,7 +212,7 @@ describe('Managing Regions', function() {
         var removeBoards = belt.findMany( 'board' )
             .then(function( resources ) {
                 if (!resources.length) return;
-                  
+
                 var promises = [];
 
                 resources.forEach(function( resource ) {

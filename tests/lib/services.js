@@ -82,12 +82,20 @@ Services.prototype.selectBoard = function( wall ) {
         });
 };
 
+
+
+
+
+// cards
+
 // card:created
 Services.prototype.displayCard = function( id ) {
+    var _this = this;
+
     return this._queries
         .getCard( id )
         .then(function( card ) {
-            this._interface.displayCard( card );  // --> card:displayed
+            _this._interface.displayCard( card );  // --> card:displayed
 
             return card;
         });
@@ -106,45 +114,28 @@ Services.prototype.displayCards = function( board ) {
         });
 };
 
-// region:created
-Services.prototype.displayRegion = function( id ) {
-    return this._queries
-        .getRegion( id )
-        .then(function( region ) {
-            this._interface.displayRegion( region );  // --> region:displayed
-
-            return region;
-        });
-};
-
-// board:displayed
-Services.prototype.displayRegions = function( board ) {
+// card:move
+Services.prototype.moveCard = function( info ) {
     var _this = this;
 
     return this._queries
-        .getRegionsForBoard( board )
-        .then(function( regions ) {
-            _this._interface.displayRegions( regions );  // --> region:displayed
+        .getCard( info.id )
+        .then(function( card ) {
+            if ( card.x != info.x || card.y != info.y ) {
+              card.x = info.x;
+              card.y = info.y;
 
-            return regions;
+              return _this._commands.updateCard( card );  // --> card:updated
+            }
         });
 };
 
-// card:move
-Services.prototype.moveCard = function( info ) {
-var _this = this;
 
-return this._queries
-    .getCard( info.id )
-    .then(function( card ) {
-        if ( card.x != info.x || card.y != info.y ) {
-          card.x = info.x;
-          card.y = info.y;
 
-          return _this._commands.updateCard( card );  // --> card:updated
-        }
-    });
-};
+
+
+
+// pockets
 
 // pocket:new
 Services.prototype.newPocket = function() {
@@ -190,6 +181,38 @@ Services.prototype.updatePocket = function( data ) {
     return this._commands.updatePocket( data );  // --> pocket:updated
 };
 
+
+
+
+
+
+// regions
+
+// region:created
+Services.prototype.displayRegion = function( id ) {
+    var _this = this;
+
+    return this._queries
+        .getRegion( id )
+        .then(function( region ) {
+            _this._interface.displayRegion( region );  // --> region:displayed
+
+            return region;
+        });
+};
+
+// board:displayed
+Services.prototype.displayRegions = function( board ) {
+    var _this = this;
+
+    return this._queries
+        .getRegionsForBoard( board )
+        .then(function( regions ) {
+            _this._interface.displayRegions( regions );  // --> region:displayed
+
+            return regions;
+        });
+};
 // region:new
 Services.prototype.newRegion = function() {
     return this._interface.displayRegionCreator();
@@ -248,6 +271,12 @@ Services.prototype.resizeRegion = function( info ) {
 Services.prototype.updateRegion = function( data ) {
   return this._commands.updateRegion( data );  // --> region:updated
 };
+
+
+
+
+
+// walls
 
 // wall:new
 Services.prototype.newWall = function() {

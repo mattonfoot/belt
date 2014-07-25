@@ -9,7 +9,7 @@ var should = require('chai').should()
   , Services = require('./lib/services')
   , Wall = require('./lib/models/wall');
 
-describe('Managing Walls', function() {
+describe('using an adapter', function() {
     var ids = {}
       , opts = {};
 
