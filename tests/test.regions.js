@@ -62,16 +62,16 @@ describe('Managing Regions', function() {
             .beforeUpdate( Card.onBeforeUpdate );
 
         services
-            .createWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+            .createWall( { name: 'test wall' } )
             .then(function( resource ) {
                 wall = resource;
 
-                return services.createBoard( { preventDefault: function(){}, target: { wall: wall.getId(), name: 'test board' } } );
+                return services.createBoard( { wall: wall.getId(), name: 'test board' } );
             })
             .then(function( resource ) {
                 board = resource;
 
-                return services.createRegion( { preventDefault: function(){}, target: { board: board.getId(), label: 'test region', value: 'test value' } } );
+                return services.createRegion( { board: board.getId(), label: 'test region', value: 'test value' } );
             })
             .then(function( resource ) {
 
@@ -98,7 +98,7 @@ describe('Managing Regions', function() {
                 });
 
             services
-                .createRegion( { preventDefault: function(){}, target: { board: board.getId(), label: 'test region', value: 'test value' } } )
+                .createRegion( { board: board.getId(), label: 'test region', value: 'test value' } )
                 .then(function( resource ) {
                     should.exist( resource );
 
@@ -117,7 +117,7 @@ describe('Managing Regions', function() {
             var storedId = region.getId(), storedLabel = region.getLabel(), storedValue = region.getValue();
 
             queue
-                .on('regioneditor:display', function( region ) {
+                .on('regioneditor:displayed', function( region ) {
 
                     region.getId().should.be.equal( storedId );
                     region.getLabel().should.be.equal( storedLabel );
@@ -127,7 +127,7 @@ describe('Managing Regions', function() {
                 });
 
             services
-                .editRegion( { preventDefault: function(){}, target: { 'data-target': region.getId() } } )
+                .editRegion( region.getId() )
                 .then(function( data ) {
                     data.getId().should.be.equal( storedId );
                     data.getLabel().should.be.equal( storedLabel );
@@ -159,7 +159,7 @@ describe('Managing Regions', function() {
                 });
 
             services
-                .updateRegion( { preventDefault: function(){}, target: update } )
+                .updateRegion( update )
                 .then(function( resource ) {
                     should.exist( resource );
 

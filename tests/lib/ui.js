@@ -1,106 +1,217 @@
+var CanvasBoard = require('./shapes/board')
+  , CanvasCard = require('./shapes/card')
+  , CanvasRegion = require('./shapes/region');
 
-function UI( queue, $element, options ) {
+
+function UI( queue, $element, options, $ ) {
     this._queue = queue;
 
     this._$element = $element;
 
+    this._size = {
+        height: $(window).innerHeight(),
+        width: $(window).innerWidth()
+    };
+
     this.constructor = UI;
 
-    var listeners = [ 'new', 'create', 'edit', 'update', 'select', 'display', 'unlink' ];
+    var clicks = [ 'new', 'edit', 'select', 'display', 'unlink' ];
 
-    // e.g. on click or touch for [data-new="wall"] trigger 'wall:new' with ev
-    // e.g. on click or touch for [data-update="board"] trigger 'board:update' with ev
+    // e.g. on click or touch for [data-new="wall"] trigger 'wall:new' with id
+    // e.g. on click or touch for [data-edit="board"] trigger 'board:edit' with id
 
-    listeners.forEach(function( task ) {
+    clicks.forEach(function( task ) {
         $element.on( 'click touch', '[data-'+ task +']', function( ev ) {
-            queue
-                .trigger( this.data( task ) + ':' + task, ev );
+            ev.preventDefault();
+
+            var type = $(this).data( task );
+
+            var target = $(this).data( type ) || $(this).data('parent') || ( $(this).attr('href') || '' ).replace('#', '');
+
+            queue.trigger( type + ':' + task, target );
         });
     });
 
-    var displays = [ 'Board', 'Wall', 'WallSelector', 'BoardSelector' ];
+    var submits = [ 'create', 'update' ];
 
-    var _this = this;
+    // e.g. on submit for [data-create="wall"] trigger 'wall:new' with ev
 
-    displays.forEach(function( display ) {
-        queue
-            .on( display.toLowerCase() + ':display', function( data ) {
-                _this[ 'display' + display ]( data );
-            })
-            .on( display.toLowerCase() + ':add', function( data ) {
-                _this[ 'add' + display ]( data );
+    submits.forEach(function( task ) {
+        $element.on( 'submit', '[data-'+ task +']', function( ev ) {
+            ev.preventDefault();
+
+            var data = {};
+            var a = $(this).serializeArray();
+            a.forEach(function( pair ) {
+                var key = pair.name, value = pair.value;
+
+                if (data[key] !== undefined) {
+                    if (!data[key].push) {
+                        data[key] = [data[key]];
+                    }
+                    data[key].push(value || '');
+                } else {
+                    data[key] = value || '';
+                }
             });
+
+            queue.trigger( $(this).data( task ) + ':' + task, data );
+        });
     });
 }
 
-UI.prototype = {
+UI.prototype.displayBoard = function( board ) {
+    var viewer = '<div id="'+ board.getId() +'" class="tab-content" data-viewer="board"></div>';
 
-    constructor: UI,
+    this._$element.find('[data-viewer="board"]').replaceWith( viewer );
 
-    addBoard: function( board ) {
-        $('<li><a href="#'+ board.getId() +'" data-display="board">'+ board.getName() +'</a></li>')
-            .appendBefore( this._$element.find('[data-selector="board"]').children().last() );
+    this._canvasboard = new CanvasBoard( this._queue, board, this._size );
+    this._canvascards = [];
+    this._canvasregions = [];
+};
 
-        this._queue.trigger( 'board:added', board );
-    },
+UI.prototype.addBoard = function( boards ) {
+    var options = boards.map(function( board ) {
+        return '<li><a href="#'+ board.getId() +'" data-display="board">'+ board.getName() +'</a></li>';
+    });
 
-    displayBoard: function( board ) {
-        var viewer = '<div id="'+ board.getId() +'" class="tab-content" data-viewer="board"></div>';
+    options.push('<li><button type="button" class="btn btn-default" data-toggle="modal" data-target="#newBoard" data-new="board" data-parent="'+ this._wall.getId() +'" title="Add Board"><i class="glyphicon glyphicon-plus"></i></button></li>');
 
-        this._$element.find('[data-viewer="board"]').replaceWith( viewer );
+    this._$element.find('[data-selector="board"]').empty().append( options.join('') );
+};
 
-        this._board = board;
-        this._canvasboard = new CanvasBoard( this.queue, board, this.size );
+UI.prototype.displayBoardCreator = function( wall ) {
+    this._boardcreator = this._boardcreator || this._$element.find('[data-create="board"]');
 
-        this._queue.trigger( 'board:displayed', board );
-    },
+    this._boardcreator[0].reset();
+    this._boardcreator.find('[name="wall"]').val( wall.getId() );
 
-    displayWall: function( wall ) {
-        var viewer = $('<div id="'+ wall.getId() +'" class="container" data-viewer="wall"> \
-                <ul data-selector="board" class="nav nav-tabs"> \
-                    <li><button type="button" class="btn btn-default" data-new="board" title="Add Board"><i class="glyphicon glyphicon-plus"></i></button></li> \
-                </ul> \
-                <div class="tab-content" [data-viewer="board"]></div> \
-            </div>');
+    this._boardcreator.modal( 'show' );
+};
 
-        this._$element.find('[data-viewer="wall"]').replaceWith( viewer );
+UI.prototype.displayBoardEditor = function( board ) {
+    this._boardeditor = this._boardeditor || this._$element.find('[data-create="board"]');
 
-        this._wall = wall;
-        delete this._board;
+    this._boardeditor[0].reset();
+    this._boardeditor.find('[name="id"]').val( board.getId() );
+    this._boardeditor.find('[name="name"]').val( board.getName() );
+    this._boardeditor.find('[name="transform"]').val( board.getWall() );
+    this._boardeditor.find('[name="wall"]').val( board.getWall() );
 
-        this._queue.trigger( 'wall:displayed', board );
-    },
+    this._boardeditor.modal( 'show' );
+};
 
-    displayWallSelector: function( walls ) {
-        var options = walls.map(function( wall ) {
-            return '<a href="#'+ wall.getId() +'" data-display="wall" class="list-group-item">'+ wall.getName() +'</a>';
-        });
+UI.prototype.updateBoardSelector = function( board ) {
+    var selector = this._$element.find('[data-selector="board"]');
 
-        this._$element.find('[data-selector="wall"]').empty().append( options.join('') );
+    selector.find('.active').removeClass('active');
 
-        this._queue.trigger( 'wallselector:displayed', board );
-    },
+    $('<li><a href="#'+ board.getId() +'" data-display="board">'+ board.getName() +'</a></li>')
+        .appendBefore( selector.children().last() );
+};
 
-    displayBoardSelector: function( boards ) {
-        var options = boards.map(function( board ) {
-            return '<li><a href="#'+ board.getId() +'" data-display="board">'+ board.getName() +'</a></li>';
-        });
+// cards
 
-        options.push('<li><button type="button" class="btn btn-default" data-new="board" title="Add Board"><i class="glyphicon glyphicon-plus"></i></button></li>');
+UI.prototype.displayCard = function( card, pocket ) {
+    var canvascard = new CanvasCard( this._queue, card, pocket );
 
-        this._$element.find('[data-selector="board"]').empty().append( options.join('') );
+    this._canvasboard.addCard( canvascard );
+};
 
-        this._queue.trigger( 'boardselector:displayed', board );
-    },
+UI.prototype.displayPocketCreator = function( wall ) {
+    this._pocketcreator = this._pocketcreator || this._$element.find('[data-create="pocket"]');
 
-    // controls
+    this._pocketcreator[0].reset();
+    this._pocketcreator.find('[name="wall"]').val( wall.getId() );
 
-    enableControls: function( data ) {
-        this._$element.find('[data-new]:disabled').removeAttr( 'disabled' );
+    this._pocketcreator.modal( 'show' );
+};
 
-        this._queue.trigger( 'controls:enabled' );
-    }
+UI.prototype.displayPocketEditor = function( pocket ) {
+    this._pocketeditor = this._pocketeditor || this._$element.find('[data-create="pocket"]');
 
+    this._pocketeditor[0].reset();
+    this._pocketeditor.find('[name="id"]').val( pocket.getId() );
+    this._pocketeditor.find('[name="title"]').val( pocket.getTitle() );
+    this._pocketeditor.find('[name="content"]').val( pocket.getContent() );
+    this._pocketeditor.find('[name="tags"]').val( pocket.getTags() );
+    this._pocketeditor.find('[name="mentions"]').val( pocket.getMentions() );
+    this._pocketeditor.find('[name="wall"]').val( pocket.getWall() );
+
+    this._pocketeditor.modal( 'show' );
+};
+
+// regions
+
+UI.prototype.displayRegion = function( region ) {
+    var canvasregion = new CanvasRegion( this._queue, region );
+
+    this._canvasboard.addRegion( canvasregion );
+};
+
+UI.prototype.displayRegionCreator = function( board ) {
+    this._regioncreator = this._regioncreator || this._$element.find('[data-create="region"]');
+
+    this._regioncreator[0].reset();
+    this._regioncreator.find('[name="board"]').val( board.getId() );
+
+    this._regioncreator.modal( 'show' );
+};
+
+UI.prototype.displayRegionEditor = function( region ) {
+    this._regioneditor = this._regioneditor || this._$element.find('[data-create="region"]');
+
+    this._regioneditor[0].reset();
+    this._regioneditor.find('[name="id"]').val( region.getId() );
+    this._regioneditor.find('[name="label"]').val( region.getLabel() );
+    this._regioneditor.find('[name="value"]').val( region.getValue() );
+    this._regioneditor.find('[name="color"]').val( region.getColor() );
+    this._regioneditor.find('[name="board"]').val( region.getBoard() );
+
+    this._regioneditor.modal( 'show' );
+};
+
+// walls
+
+UI.prototype.displayWall = function( wall ) {
+    var viewer = $('<div id="'+ wall.getId() +'" class="container" data-viewer="wall"> \
+            <ul data-selector="board" class="nav nav-tabs"></ul> \
+            <div class="tab-content" data-viewer="board"></div> \
+        </div>');
+
+    this._$element.find('[data-viewer="wall"]').replaceWith( viewer );
+};
+
+UI.prototype.displayWallCreator = function() {
+    this._wallcreator = this._wallcreator || this._$element.find('[data-create="wall"]');
+
+    this._wallcreator[0].reset();
+
+    this._wallcreator.modal( 'show' );
+};
+
+UI.prototype.displayWallEditor = function( wall ) {
+    this._walleditor = this._walleditor || this._$element.find('[data-create="wall"]');
+
+    this._walleditor[0].reset();
+    this._walleditor.find('[name="id"]').val( wall.getId() );
+    this._walleditor.find('[name="name"]').val( wall.getName() );
+
+    this._walleditor.modal( 'show' );
+};
+
+UI.prototype.displayWallSelector = function( walls ) {
+    var options = walls.map(function( wall ) {
+        return '<a href="#'+ wall.getId() +'" class="list-group-item" data-display="wall" data-dismiss="modal">'+ wall.getName() +'</a>';
+    });
+
+    this._$element.find('[data-selector="wall"]').empty().append( options.join('') );
+};
+
+// controls
+
+UI.prototype.enableControls = function() {
+    this._$element.find('[data-new]:disabled').removeAttr( 'disabled' );
 };
 
 module.exports = UI;

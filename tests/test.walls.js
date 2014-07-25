@@ -33,7 +33,7 @@ describe('Managing Walls', function() {
             .beforeCreate( Wall.onBeforeCreate )
             .beforeUpdate( Wall.onBeforeUpdate );
 
-        services.createWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+        services.createWall( { name: 'test wall' } )
             .then(function( resource ) {
                 wall = resource;
             })
@@ -47,7 +47,7 @@ describe('Managing Walls', function() {
 
         it('adding one wall', function( done ) {
             services
-                .createWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+                .createWall( { name: 'test wall' } )
                 .then(function( resource ) {
                     should.exist( resource );
 
@@ -63,8 +63,8 @@ describe('Managing Walls', function() {
     describe('listing walls', function() {
 
         before(function (done) {
-            var firstWall = services.createWall( { preventDefault: function(){}, target: { name: 'test wall three' } } );
-            var secondWall = services.createWall( { preventDefault: function(){}, target: { name: 'test wall two' } } );
+            var firstWall = services.createWall( { name: 'test wall three' } );
+            var secondWall = services.createWall( { name: 'test wall two' } );
 
             RSVP.all( [ firstWall, secondWall ] )
                 .then(function() {
@@ -76,7 +76,7 @@ describe('Managing Walls', function() {
         it('listing all walls for display in selector', function( done ) {
 
             queue
-                .on( 'wallselector:display', function( walls ) {
+                .on( 'wallselector:displayed', function( walls ) {
                     walls.forEach(function( resource ) {
                         resource.should.be.instanceOf( Wall );
                     });
@@ -97,7 +97,7 @@ describe('Managing Walls', function() {
             var storedId = wall.getId(), storedName = wall.getName(), displayCalled = false;
 
             queue
-                .on( 'wall:display', function( wall ) {
+                .on( 'wall:displayed', function( wall ) {
                     displayCalled.should.not.be.equal( true );
                     displayCalled = true;
 
@@ -116,7 +116,7 @@ describe('Managing Walls', function() {
                 });
 
             services
-                .displayWall( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } )
+                .displayWall( wall.getId() )
                 .catch( done );
         });
 
@@ -128,7 +128,7 @@ describe('Managing Walls', function() {
             var storedId = wall.getId(), storedName = wall.getName();
 
             queue
-                .on( 'wallselector:display', function( walls ) {
+                .on( 'wallselector:displayed', function( walls ) {
                     walls.length.should.be.equal( 1 );
 
                     var wall = walls[0];
@@ -140,7 +140,7 @@ describe('Managing Walls', function() {
                 });
 
             services
-                .selectWall( { preventDefault: function(){}, target: { 'data-target': wall.getId() } } )
+                .selectWall( { 'data-target': wall.getId() } )
                 .catch( done );
         });
 
@@ -155,7 +155,7 @@ describe('Managing Walls', function() {
             };
 
             services
-                .updateWall( { preventDefault: function(){}, target: update } )
+                .updateWall( update )
                 .then(function( resource ) {
                     should.exist( resource );
 

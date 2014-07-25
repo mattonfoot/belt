@@ -44,12 +44,12 @@
     "grunt-coveralls": "*",
     "grunt-mocha": "*",
     "grunt-mocha-test": "*",
-    "jquery-browserify": "^1.8.1",
     "load-grunt-tasks": "*",
     "memdown": "*",
     "mocha": "*",
     "mocha-lcov-reporter": "*",
-    "travis-cov": "*"
+    "travis-cov": "*",
+    "literalify": "*"
   },
   "engine": "node >= 0.10.0",
   "config": {

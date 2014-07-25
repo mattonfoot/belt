@@ -62,11 +62,11 @@ describe('Managing Boards', function() {
             .beforeUpdate( Card.onBeforeUpdate );
 
         services
-            .createWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+            .createWall( { name: 'test wall' } )
             .then(function( resource ) {
                 wall = resource;
 
-                return services.createBoard( { preventDefault: function(){}, target: { wall: wall.getId(), name: 'test board' } } );
+                return services.createBoard( { wall: wall.getId(), name: 'test board' } );
             })
             .then(function( resource ) {
                 board = resource;
@@ -93,7 +93,7 @@ describe('Managing Boards', function() {
                 });
 
             services
-                .createBoard( { preventDefault: function(){}, target: { wall: wall.getId(), name: 'test board' } } )
+                .createBoard( { wall: wall.getId(), name: 'test board' } )
                 .then(function( resource ) {
                     should.exist( resource );
 
@@ -117,7 +117,7 @@ describe('Managing Boards', function() {
 
 
             queue
-                .on('boardeditor:display', function( board ) {
+                .on('boardeditor:displayed', function( board ) {
                     board.getId().should.be.equal( storedId );
                     board.getName().should.be.equal( storedName );
 
@@ -125,7 +125,7 @@ describe('Managing Boards', function() {
                 });
 
             services
-                .editBoard( { preventDefault: function(){}, target: { 'data-target': board.getId() } } )
+                .editBoard( board.getId() )
                 .then(function( board ) {
                     board.getId().should.be.equal( storedId );
                     board.getName().should.be.equal( storedName );
@@ -163,7 +163,7 @@ describe('Managing Boards', function() {
 
 
             services
-                .updateBoard( { preventDefault: function(){}, target: update } )
+                .updateBoard( update )
                 .then(function( resource ) {
                     should.exist( resource );
 

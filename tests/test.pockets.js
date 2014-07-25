@@ -62,11 +62,11 @@ describe('Managing Pockets', function() {
             .beforeUpdate( Card.onBeforeUpdate );
 
         services
-            .createWall( { preventDefault: function(){}, target: { name: 'test wall' } } )
+            .createWall( { name: 'test wall' } )
             .then(function( resource ) {
                 wall = resource;
 
-                return services.createPocket( { preventDefault: function(){}, target: { wall: wall.getId(), title: 'test pocket' } } );
+                return services.createPocket( { wall: wall.getId(), title: 'test pocket' } );
             })
             .then(function( resource ) {
                 pocket = resource;
@@ -81,7 +81,7 @@ describe('Managing Pockets', function() {
         it('adding a pocket to a wall', function( done ) {
 
             services
-                .createPocket( { preventDefault: function(){}, target: { wall: wall.getId(), title: 'test pocket' } } )
+                .createPocket( { wall: wall.getId(), title: 'test pocket' } )
                 .then(function( resource ) {
                     should.exist( resource );
 
@@ -102,7 +102,7 @@ describe('Managing Pockets', function() {
             var storedId = pocket.getId(), storedTitle = pocket.getTitle();
 
             services
-                .editPocket( { preventDefault: function(){}, target: { 'data-target': pocket.getId() } } )
+                .editPocket( pocket.getId() )
                 .then(function( pocket ) {
                     pocket.getId().should.be.equal( storedId );
                     pocket.getTitle().should.be.equal( storedTitle );
@@ -124,7 +124,7 @@ describe('Managing Pockets', function() {
             };
 
             services
-                .updatePocket( { preventDefault: function(){}, target: update } )
+                .updatePocket( update )
                 .then(function( resource ) {
                     should.exist( resource );
 

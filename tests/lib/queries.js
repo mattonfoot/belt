@@ -17,10 +17,15 @@ Queries.prototype.getBoard = function( boardid ) {
     });
 };
 
-Queries.prototype.getBoards = function( boardids ) {
-    var _this = this;
+Queries.prototype.getBoardsForWall = function( wall ) {
+    var _this = this
+      , boardids = wall.getBoards();
 
     return new Promise(function( resolve, reject ) {
+        if (!boardids.length) {
+            resolve([]);
+        }
+
         _this._db.findMany( 'board', boardids )
             .then( resolve )
             .catch( reject );
@@ -37,10 +42,15 @@ Queries.prototype.getCard = function( cardid ) {
     });
 };
 
-Queries.prototype.getCards = function( cardids ) {
-    var _this = this;
+Queries.prototype.getCardsForBoard = function( board ) {
+    var _this = this
+      , cardids = board.getCards();
 
     return new Promise(function( resolve, reject ) {
+        if (!cardids.length) {
+            resolve([]);
+        }
+
         _this._db.findMany( 'card', cardids )
             .then( resolve )
             .catch( reject );
@@ -57,10 +67,15 @@ Queries.prototype.getPocket = function( pocketid ) {
     });
 };
 
-Queries.prototype.getPockets = function( pocketids ) {
-    var _this = this;
+Queries.prototype.getPocketsForWall = function( wall ) {
+    var _this = this
+      , pocketids = wall.getPockets();
 
     return new Promise(function( resolve, reject ) {
+        if (!pocketids.length) {
+            resolve([]);
+        }
+
         _this._db.findMany( 'pocket', pocketids )
             .then( resolve )
             .catch( reject );
@@ -77,10 +92,15 @@ Queries.prototype.getRegion = function( regionid ) {
     });
 };
 
-Queries.prototype.getRegions = function( regionids ) {
-    var _this = this;
+Queries.prototype.getRegionsForBoard = function( board ) {
+    var _this = this
+      , regionids = board.getRegions();
 
     return new Promise(function( resolve, reject ) {
+        if (!regionids.length) {
+            resolve([]);
+        }
+
         _this._db.findMany( 'region', regionids )
             .then( resolve )
             .catch( reject );
@@ -97,11 +117,11 @@ Queries.prototype.getWall = function( wallid ) {
     });
 };
 
-Queries.prototype.getWalls = function( wallids ) {
+Queries.prototype.getAllWalls = function() {
     var _this = this;
 
     return new Promise(function( resolve, reject ) {
-        _this._db.findMany( 'wall', wallids )
+        _this._db.findMany( 'wall' )
             .then( resolve )
             .catch( reject );
     });

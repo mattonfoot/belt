@@ -10,26 +10,25 @@ function Services( interface, commands, queries ) {
 }
 
 // board:new
-Services.prototype.newBoard = function( ev ) {
-    this._interface.displayBoardCreator();
+Services.prototype.newBoard = function() {
+    return this._interface.displayBoardCreator();
 };
 
 // board:create
-Services.prototype.createBoard = function( ev ) {
+Services.prototype.createBoard = function( data ) {
     var _this = this, board;
 
-    return this._interface
-        .extractAddBoardData( ev )
-        .then(function( data ) {
-            return _this._commands.createBoard( data );  // --> board:created
-        })
+    return this._commands
+        .createBoard( data )  // --> board:created
         .then(function( resource ) {
             board = resource;
+
+            _this._interface.addBoard( board );
 
             return _this._queries.getWall( board.getWall() );
         })
         .then(function( wall ) {
-            return _this._queries.getPockets( wall.getPockets() );
+            return _this._queries.getPocketsForWall( wall );
         })
         .then(function( pockets ) {
             _this._commands.addPocketsToBoard( board, pockets );  // --> card:created
@@ -39,14 +38,11 @@ Services.prototype.createBoard = function( ev ) {
 };
 
 // board:edit
-Services.prototype.editBoard = function( ev ) {
+Services.prototype.editBoard = function( id ) {
     var _this = this;
 
-    return this._interface
-        .extractTargetId( ev )
-        .then(function( id ) {
-            return _this._queries.getBoard( id );
-        })
+    return this._queries
+        .getBoard( id )
         .then(function( board ) {
             _this._interface.displayBoardEditor( board );
 
@@ -55,25 +51,16 @@ Services.prototype.editBoard = function( ev ) {
 };
 
 // board:update
-Services.prototype.updateBoard = function( ev ) {
-    var _this = this;
-
-    return this._interface
-        .extractModifyBoardData( ev )
-        .then(function( data ) {
-            return _this._commands.updateBoard( data );  // --> board:updated
-        });
+Services.prototype.updateBoard = function( data ) {
+    return this._commands.updateBoard( data );  // --> board:updated
 };
 
 // board:display
-Services.prototype.displayBoard = function( ev ) {
+Services.prototype.displayBoard = function( id ) {
     var _this = this;
 
-    return this._interface
-        .extractTargetId( ev )
-        .then(function( id ) {
-            return _this._queries.getBoard( id );
-        })
+    return this._queries
+        .getBoard( id )
         .then(function( board ) {
             _this._interface.displayBoard( board );  // --> board:displayed
 
@@ -82,16 +69,11 @@ Services.prototype.displayBoard = function( ev ) {
 };
 
 // card:move
-Services.prototype.moveCard = function( ev ) {
-var _this = this, info;
+Services.prototype.moveCard = function( info ) {
+var _this = this;
 
-return this._interface
-    .extractMoveCardData( ev )
-    .then(function( data ) {
-        info = data;
-
-        return _this.queries.getCard( info.id );
-    })
+return this._queries
+    .getCard( info.id )
     .then(function( card ) {
         if ( card.x != info.x || card.y != info.y ) {
           card.x = info.x;
@@ -103,26 +85,23 @@ return this._interface
 };
 
 // pocket:new
-Services.prototype.newPocket = function( ev ) {
-    this._interface.displayPocketCreator();
+Services.prototype.newPocket = function() {
+    return this._interface.displayPocketCreator();
 };
 
 // pocket:create
-Services.prototype.createPocket = function( ev ) {
+Services.prototype.createPocket = function( data ) {
     var _this = this, pocket;
 
-    return this._interface
-        .extractAddPocketData( ev )
-        .then(function( data ) {
-            return _this._commands.createPocket( data );  // --> pocket:created
-        })
+    return this._commands
+        .createPocket( data )  // --> pocket:created
         .then(function( resource ) {
             pocket = resource;
 
             return _this._queries.getWall( pocket.getWall() );
         })
         .then(function( wall ) {
-            return _this._queries.getBoards( wall.getBoards() );
+            return _this._queries.getBoardsForWall( wall );
         })
         .then(function( boards ) {
             _this._commands.addPocketToBoards( boards, pocket );  // --> card:created
@@ -132,14 +111,11 @@ Services.prototype.createPocket = function( ev ) {
 };
 
 // pocket:edit
-Services.prototype.editPocket = function( ev ) {
+Services.prototype.editPocket = function( id ) {
     var _this = this;
 
-    return this._interface
-        .extractTargetId( ev )
-        .then(function( id ) {
-            return _this._queries.getPocket( id );
-        })
+    return this._queries
+        .getPocket( id )
         .then(function( pocket ) {
             _this._interface.displayPocketEditor( pocket );
 
@@ -148,41 +124,25 @@ Services.prototype.editPocket = function( ev ) {
 };
 
 // pocket:update
-Services.prototype.updatePocket = function( ev ) {
-    var _this = this;
-
-    return this._interface
-        .extractModifyPocketData( ev )
-        .then(function( data ) {
-            return _this._commands.updatePocket( data );  // --> pocket:updated
-        });
+Services.prototype.updatePocket = function( data ) {
+    return this._commands.updatePocket( data );  // --> pocket:updated
 };
 
 // region:new
-Services.prototype.newRegion = function( ev ) {
-    this._interface.displayRegionCreator();
+Services.prototype.newRegion = function() {
+    return this._interface.displayRegionCreator();
 };
 
 // region:create
-Services.prototype.createRegion = function( ev ) {
-    var _this = this;
-
-    return this._interface
-        .extractAddRegionData( ev )
-        .then(function( data ) {
-            return _this._commands.createRegion( data );  // --> region:created
-        });
+Services.prototype.createRegion = function( data ) {
+    return this._commands.createRegion( data );  // --> region:created
 };
 
 // region:edit
-Services.prototype.editRegion = function( ev ) {
+Services.prototype.editRegion = function( id ) {
     var _this = this;
 
-    return this._interface
-        .extractTargetId( ev )
-        .then(function( id ) {
-            return _this._queries.getRegion( id );
-        })
+    return this._queries.getRegion( id )
         .then(function( region ) {
             _this._interface.displayRegionEditor( region );
 
@@ -191,16 +151,11 @@ Services.prototype.editRegion = function( ev ) {
 };
 
 // region:move
-Services.prototype.moveRegion = function( ev ) {
-  var _this = this, info;
+Services.prototype.moveRegion = function( info ) {
+  var _this = this;
 
-  return this._interface
-      .extractMoveRegionData( ev )
-      .then(function( data ) {
-          info = data;
-
-          return _this.queries.getRegion( info.id );
-      })
+  return this._queries
+      .getRegion( info.id )
       .then(function( region ) {
           if ( region.x != info.x || region.y != info.y ) {
             region.x = info.x;
@@ -212,16 +167,11 @@ Services.prototype.moveRegion = function( ev ) {
 };
 
 // region:resize
-Services.prototype.resizeRegion = function( ev ) {
-  var _this = this, info;
+Services.prototype.resizeRegion = function( info ) {
+  var _this = this;
 
-  return this._interface
-      .extractResizeRegionData( ev )
-      .then(function( data ) {
-          info = data;
-
-          return _this.queries.getRegion( info.id );
-      })
+  return this._queries
+      .getRegion( info.id )
       .then(function( region ) {
           if ( region.height != info.height || region.width != info.width ) {
             region.height = info.height;
@@ -233,41 +183,26 @@ Services.prototype.resizeRegion = function( ev ) {
 };
 
 // region:update
-Services.prototype.updateRegion = function( ev ) {
-  var _this = this;
-
-  return this._interface
-      .extractModifyRegionData( ev )
-      .then(function( data ) {
-          return _this._commands.updateRegion( data );  // --> region:updated
-      });
+Services.prototype.updateRegion = function( data ) {
+  return this._commands.updateRegion( data );  // --> region:updated
 };
 
 // wall:new
-Services.prototype.newWall = function( ev ) {
+Services.prototype.newWall = function() {
     this._interface.displayWallCreator();
 };
 
 // wall:create
-Services.prototype.createWall = function( ev ) {
-    var _this = this;
-
-    return this._interface
-        .extractAddWallData( ev )
-        .then(function( data ) {
-            return _this._commands.createWall( data ); // --> wall:created
-        });
+Services.prototype.createWall = function( data ) {
+    return this._commands.createWall( data ); // --> wall:created
 };
 
 // wall:edit
-Services.prototype.editWall = function( ev ) {
+Services.prototype.editWall = function( id ) {
     var _this = this;
 
-    return this._interface
-        .extractTargetId( ev )
-        .then(function( id ) {
-            return _this._queries.getWall( id );
-        })
+    return this._queries
+        .getWall( id )
         .then(function( wall ) {
             _this._interface.displayWallEditor( wall );
 
@@ -276,25 +211,15 @@ Services.prototype.editWall = function( ev ) {
 };
 
 // wall:update
-Services.prototype.updateWall = function( ev ) {
-    var _this = this;
-
-    return this._interface
-        .extractModifyWallData( ev )
-        .then(function( data ) {
-            return _this._commands.updateWall( data );  // --> wall:updated
-        });
+Services.prototype.updateWall = function( data ) {
+    return this._commands.updateWall( data );  // --> wall:updated
 };
 
 // wall:select
-Services.prototype.selectWall = function( ev ) {
+Services.prototype.selectWall = function( id ) {
     var _this = this;
 
-    return this._interface
-        .preventDefault( ev )
-        .then(function( ev ) {
-            return _this._queries.getWalls();
-        })
+    return this._queries.getAllWalls()
         .then(function( walls ) {
             _this._interface.displayWallSelector( walls );
 
@@ -303,39 +228,34 @@ Services.prototype.selectWall = function( ev ) {
 };
 
 // wall:display
-Services.prototype.displayWall = function( ev ) {
-    var _this = this;
+Services.prototype.displayWall = function( id ) {
+    var _this = this, wall;
 
-    return this._interface
-        .extractTargetId( ev )
-        .then(function( id ) {
-            return _this._queries.getWall( id );
-        })
-        .then(function( wall ) {
+    return this._queries.getWall( id )
+        .then(function( resource ) {
+            wall = resource;
+
             _this._interface.displayWall( wall );  // --> wall:display
 
             if ( !wall.boards.length ) {
                 _this._interface.notifyWallFirstTime( wall );  // --> wall:firsttime
             }
 
-            return wall;
+            return _this.selectBoard( wall );
         })
         .then(function( boards ) {
-            _this._interface.displayBoardSelector( boards );
+            _this._interface.displayBoard( boards[0] );  // --> board:displayed
 
-            return boards;
+            return wall;
         });
 };
 
 // transform:unlink
-Services.prototype.unlinkTransform = function( ev ) {
+Services.prototype.unlinkTransform = function( id ) {
     var _this = this;
 
-    return this._interface
-        .extractTargetId( ev )
-        .then(function( id ) {
-            return _this._queries.getTransform( id );
-        })
+    return this._queries
+        .getTransform( id )
         .then(function( transform ) {
             return _this._commands.unlinkTransform( id );  // --> transform:unlinked
         })
@@ -348,22 +268,28 @@ Services.prototype.unlinkTransform = function( ev ) {
 
 // board:select
 Services.prototype.selectBoard = function( wall ) {
-    return this._queries
-        .getBoards( wall.getBoards() )
-        .then(function( boards ) {
-            return _this._interface.displayBoardSelector( boards );  // --> boardselector:displayed
-        })
-        .then(function( boards ) {
-            _this._interface.displayBoard( boards[0] );  // --> board:displayed
+    var _this = this;
 
-            return boards[0];
+    return this._queries
+        .getBoardsForWall( wall )
+        .then(function( boards ) {
+            _this._interface.displayBoardSelector( boards );  // --> boardselector:displayed
+
+            return boards;
         });
+};
+
+// card:created
+Services.prototype.displayCard = function( card ) {
+    return this._interface.displayCard( card );  // --> card:displayed
 };
 
 // board:displayed
 Services.prototype.displayCards = function( board ) {
+    var _this = this;
+
     return this._queries
-        .getCards( board.getCards() )
+        .getCardsForBoard( board )
         .then(function( cards ) {
             _this._interface.displayCards( cards );  // --> card:displayed
 
@@ -371,10 +297,17 @@ Services.prototype.displayCards = function( board ) {
         });
 };
 
+// card:created
+Services.prototype.displayRegion = function( region ) {
+    return this._interface.displayRegion( region );  // --> region:displayed
+};
+
 // board:displayed
 Services.prototype.displayRegions = function( board ) {
+    var _this = this;
+
     return this._queries
-        .getRegions( board.getRegions() )
+        .getRegionsForBoard( board )
         .then(function( regions ) {
             _this._interface.displayRegions( regions );  // --> region:displayed
 

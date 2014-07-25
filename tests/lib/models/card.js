@@ -98,6 +98,9 @@ Card.onBeforeCreate = function( data ) {
     // data.createdBy = app.getCurrentUser()._id;
     data.createdOn = new Date();
 
+    data.x = data.x || 20;
+    data.y = data.y || 20;
+
     return data;
 };
 

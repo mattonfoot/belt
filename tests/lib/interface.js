@@ -1,196 +1,122 @@
-var RSVP = require('rsvp')
-  , Promise = RSVP.Promise;
-
 // Commands
 
 function Interface( queue ) {
     this._queue = queue;
 }
 
-Interface.prototype.preventDefault = function( ev ) {
-    return new Promise(function( resolve, reject ) {
-        ev.preventDefault();
+Interface.prototype.addBoard = function( board ) {
+    this.displayBoard( board );
 
-        resolve( ev );
-    });
-};
+    // this._ui.addBoard();
 
-Interface.prototype.extractTargetId = function( ev ) {
-    return this.preventDefault( ev )
-        .then(function( ev ) {
-            var el = ev.target;
-
-            return el['data-target'];
-        });
-};
-
-Interface.prototype.extractAddWallData = function( ev ) {
-    return this.preventDefault( ev )
-        .then(function( ev ) {
-            var form = ev.target;
-
-            var data = {
-                name: form.name
-            };
-
-            return data;
-        });
-};
-
-Interface.prototype.extractModifyWallData = function( ev ) {
-    return new Promise(function( resolve, reject ) {
-        var form = ev.target;
-
-        var data = {
-            id: form.id,
-            name: form.name
-        };
-
-        resolve( data );
-    });
-};
-
-Interface.prototype.extractAddBoardData = function( ev ) {
-    return new Promise(function( resolve, reject ) {
-        var form = ev.target;
-
-        var data = {
-            name: form.name,
-            wall: form.wall
-        };
-
-        resolve( data );
-    });
-};
-
-Interface.prototype.extractModifyBoardData = function( ev ) {
-    return new Promise(function( resolve, reject ) {
-        var form = ev.target;
-
-        var data = {
-            id: form.id,
-            name: form.name,
-            wall: form.wall
-        };
-
-        resolve( data );
-    });
-};
-
-Interface.prototype.extractAddRegionData = function( ev ) {
-    return new Promise(function( resolve, reject ) {
-        var form = ev.target;
-
-        var data = {
-            label: form.label,
-            value: form.value,
-            color: form.color,
-            board: form.board
-        };
-
-        resolve( data );
-    });
-};
-
-Interface.prototype.extractModifyRegionData = function( ev ) {
-    return new Promise(function( resolve, reject ) {
-        var form = ev.target;
-
-        var data = {
-            id: form.id,
-            label: form.label,
-            value: form.value,
-            color: form.color,
-            board: form.board
-        };
-
-        resolve( data );
-    });
-};
-
-Interface.prototype.extractAddPocketData = function( ev ) {
-    return new Promise(function( resolve, reject ) {
-        var form = ev.target;
-
-        var data = {
-            title: form.title,
-            wall: form.wall
-        };
-
-        resolve( data );
-    });
-};
-
-Interface.prototype.extractModifyPocketData = function( ev ) {
-    return new Promise(function( resolve, reject ) {
-        var form = ev.target;
-
-        var data = {
-            id: form.id,
-            title: form.title,
-            wall: form.wall
-        };
-
-        resolve( data );
-    });
-};
-
-Interface.prototype.displayBoardSelector = function( boards ) {
-    this._queue.trigger( 'boardselector:display', boards );
+    this._queue.trigger( 'board:added', board );
 };
 
 Interface.prototype.displayBoard = function( board ) {
-    this._queue.trigger( 'board:display', board );
+    this._board = board;
+    this._regions = [];
+    this._cards = [];
+
+    this._queue.trigger( 'board:displayed', board );
+
+    this.enableControls();
 };
 
-Interface.prototype.displayBoardCreator = function( wall ) {
-    this._queue.trigger( 'boardcreator:display', { wall: wall.getId() } );
+Interface.prototype.displayBoardCreator = function() {
+    this._queue.trigger( 'boardcreator:displayed' );
 };
 
 Interface.prototype.displayBoardEditor = function( board ) {
-    this._queue.trigger( 'boardeditor:display', board );
+    this._queue.trigger( 'boardeditor:displayed', board );
 };
 
-Interface.prototype.addBoard = function( board ) {
-    this._queue.trigger( 'board:add', board );
-
-    this.displayBoard( board );
+Interface.prototype.displayBoardSelector = function( boards ) {
+    this._queue.trigger( 'boardselector:displayed', boards );
 };
 
-Interface.prototype.displayRegionCreator = function( board ) {
-      this._queue.trigger( 'regioncreator:display', { board: board.getId() } );
+// cards
+
+Interface.prototype.displayCard = function( card ) {
+    if (~this._cards.indexOf( card.getId() )) return;
+
+    this._cards.push( card.getId() );
+
+    this._queue.trigger( 'card:displayed', card );
 };
 
-Interface.prototype.displayRegionEditor = function( region ) {
-    this._queue.trigger( 'regioneditor:display', region );
+Interface.prototype.displayCards = function( cards ) {
+    var _this = this;
+
+    cards.forEach(function( card ) {
+        _this.displayCard( card );
+    });
 };
 
-Interface.prototype.displayPocketCreator = function( wall ) {
-    this._queue.trigger( 'pocketcreator:display', { wall: wall.getId() } );
+Interface.prototype.displayPocketCreator = function() {
+    this._queue.trigger( 'pocketcreator:displayed' );
 };
 
 Interface.prototype.displayPocketEditor = function( pocket ) {
-    this._queue.trigger( 'pocketeditor:display', pocket );
+    this._queue.trigger( 'pocketeditor:displayed', pocket );
+};
+
+// regions
+
+Interface.prototype.displayRegion = function( region ) {
+    if (~this._regions.indexOf( region.getId() )) return;
+
+    this._regions.push( region.getId() );
+
+    this._queue.trigger( 'region:displayed', region );
+};
+
+Interface.prototype.displayRegions = function( regions ) {
+    var _this = this;
+
+    regions.forEach(function( region ) {
+        _this.displayRegion( region );
+    });
+};
+
+Interface.prototype.displayRegionCreator = function() {
+    this._queue.trigger( 'regioncreator:displayed' );
+};
+
+Interface.prototype.displayRegionEditor = function( region ) {
+    this._queue.trigger( 'regioneditor:displayed', region );
+};
+
+// walls
+
+Interface.prototype.displayWall = function( wall ) {
+    this._wall = wall;
+    this._regions = [];
+    this._cards = [];
+    delete this._board;
+
+    this._queue.trigger( 'wall:displayed', wall );
 };
 
 Interface.prototype.displayWallCreator = function() {
-    this._queue.trigger( 'wallcreator:display', {} );
+    this._queue.trigger( 'wallcreator:displayed' );
 };
 
 Interface.prototype.displayWallEditor = function( wall ) {
-    this._queue.trigger( 'walleditor:display', wall );
+    this._queue.trigger( 'walleditor:displayed', wall );
 };
 
 Interface.prototype.displayWallSelector = function( walls ) {
-    this._queue.trigger( 'wallselector:display', walls );
-};
-
-Interface.prototype.displayWall = function( wall ) {
-    this._queue.trigger( 'wall:display', wall );
+    this._queue.trigger( 'wallselector:displayed', walls );
 };
 
 Interface.prototype.notifyWallFirstTime = function( wall ) {
     this._queue.trigger( 'wall:firsttime', wall );
+
+    this.displayBoardCreator();
+};
+
+Interface.prototype.enableControls = function( data ) {
+    this._queue.trigger( 'controls:enabled' );
 };
 
 module.exports = Interface;

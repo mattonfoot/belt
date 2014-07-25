@@ -1,3 +1,5 @@
+var literalify = require('literalify');
+
 module.exports = function( config ) {
     return {
 
@@ -9,9 +11,14 @@ module.exports = function( config ) {
 
         src: {
             options: {
-                require : { jquery : 'jquery-browserify' }
-            },
-            files: {
+                transform: [
+                    literalify.configure({
+                        'jquery': 'window.$'
+                    })
+                ]
+            }
+
+          , files: {
                 'build/lib/app.js': [ 'tests/lib/main.js' ]
             }
         }

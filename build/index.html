@@ -9,43 +9,229 @@
     <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
 
     <style>
+      .container {
+          width: 100%;
+      }
       .tab-content {
-        width: 100%;
-        height: 600px;
-        border-bottom: 1px solid #ddd;
-        background: #f9f9f9;
+          position: fixed;
+          width: 100%;
+          top: 50px;
+          bottom:50px;
+          border-bottom: 1px solid #ddd;
+          background: #f9f9f9;
+      }
+
+      .nav-tabs {
+          position: fixed;
+          width: 100%;
       }
     </style>
   </head>
   <body>
     <div data-provides="ui">
+        <div class="container" data-viewer="wall"></div>
+
         <nav class="navbar navbar-default navbar-fixed-bottom" role="navigation">
-            <button type="button" class="btn btn-default" data-new="region" disabled><i class="glyphicon glyphicon-plus"></i> New region</button>
-            <button type="button" class="btn btn-default" data-new="pocket" disabled><i class="glyphicon glyphicon-plus"></i> New card</button><!-- Button trigger modal -->
-            <button type="button" class="btn btn-default" data-select="wall" data-toggle="modal" data-target="#wallModal">View walls</button>
+            <button type="button" class="btn btn-default" data-new="region" data-toggle="modal" data-target="#newRegion" disabled><i class="glyphicon glyphicon-plus"></i> New region</button>
+            <button type="button" class="btn btn-default" data-new="pocket" data-toggle="modal" data-target="#newPocket" disabled><i class="glyphicon glyphicon-plus"></i> New card</button>
+            <button type="button" class="btn btn-default" data-select="wall" data-toggle="modal" data-target="#selectWall">View walls</button>
             <button type="button" class="btn btn-default auth-login" title="Login to vuu.se" data-auth="login">Login</button>
         </nav>
 
-        <div class="modal fade" id="wallModal" tabindex="-1" role="dialog" aria-labelledby="wallModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
+        <div class="modal fade" id="selectWall" tabindex="-1" role="dialog" aria-labelledby="selectWallLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h4 class="modal-title" id="wallModalLabel">VUU.SE wall list</h4>
+                        <h4 class="modal-title" id="selectWallLabel">VUU.SE wall list</h4>
                     </div>
                     <div class="modal-body">
-                        <p>Choose a wall to view:</p>
+                        <p>Select a wall to view:</p>
 
-                        <div class="list-group" data-selector="wall">
-                        </div>
+                        <div class="list-group" data-selector="wall"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal" data-new="wall" data-toggle="modal" data-target="#newWall"><i class="glyphicon glyphicon-plus"></i> New Wall</button>
                     </div>
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
+
+        <form class="modal fade" id="newWall" data-create="wall" tabindex="-1" role="dialog" aria-labelledby="newWallLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="newWallLabel">CREATE WALL: </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="name" class="control-label">Name</label>
+                            <input class="form-control" id="name" name="name" placeholder="Name" value="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Create</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </form><!-- /.modal -->
+
+        <form class="modal fade" id="editWall" data-update="wall" tabindex="-1" role="dialog" aria-labelledby="editWallLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="editWallLabel">EDIT WALL: </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="id" value="">
+
+                        <div class="form-group">
+                            <label for="name" class="control-label">Name</label>
+                            <input class="form-control" id="name" name="name" placeholder="Name" value="">
+                        </div>
+
+                        <ul class="unstyled transform-list"></ul>
+
+                        <div class="form-group">
+                          <label for="transform" class="control-label">Transform</label>
+                          <input class="form-control" id="transform" name="transform" placeholder="Transform" value="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Save</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </form><!-- /.modal -->
+
+        <form class="modal fade" id="newBoard" data-create="board" tabindex="-1" role="dialog" aria-labelledby="newBoardLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="newBoardLabel">CREATE BOARD: </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="wall" value="">
+
+                        <div class="form-group">
+                            <label for="name" class="control-label">Name</label>
+                            <input class="form-control" id="name" name="name" placeholder="Name" value="">
+                        </div>
+
+                        <div class="form-group">
+                          <label for="transform" class="control-label">Transform</label>
+                          <input class="form-control" id="transform" name="transform" placeholder="Transform" value="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Create</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </form><!-- /.modal -->
+
+        <form class="modal fade" id="editBoard" data-update="board" tabindex="-1" role="dialog" aria-labelledby="editBoardLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="editBoardLabel">EDIT BOARD: </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="id" value="">
+                        <input type="hidden" name="wall" value="">
+
+                        <div class="form-group">
+                            <label for="name" class="control-label">Name</label>
+                            <input class="form-control" id="name" name="name" placeholder="Name" value="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Save</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </form><!-- /.modal -->
+
+        <form class="modal fade" id="newRegion" data-create="region" tabindex="-1" role="dialog" aria-labelledby="newRegionLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="newRegionLabel">CREATE REGION: </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="board" value="">
+
+                        <div class="form-group">
+                          <label for="newRegion_lable" class="control-label">Label</label>
+                          <input class="form-control" id="newRegion_label" name="label" placeholder="Label" value="">
+                        </div>
+
+                        <div class="form-group">
+                          <label for="newRegion_value" class="control-label">Value</label>
+                          <input class="form-control" id="newRegion_value" name="value" placeholder="Value" value="">
+                        </div>
+
+                        <div class="form-group">
+                          <label for="newRegion_color" class="control-label">Color</label>
+                          <input class="form-control" id="newRegion_color" name="color" placeholder="Color" value="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Create</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </form><!-- /.modal -->
+
+        <form class="modal fade" id="editRegion" data-update="region" tabindex="-1" role="dialog" aria-labelledby="editRegionLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="editRegionLabel">EDIT REGION: </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="id" value="">
+                        <input type="hidden" name="board" value="">
+
+                        <div class="form-group">
+                          <label for="editRegion_label" class="control-label">Label</label>
+                          <input class="form-control" id="editRegion_label" name="label" placeholder="Label" value="">
+                        </div>
+
+                        <div class="form-group">
+                          <label for="editRegion_value" class="control-label">Value</label>
+                          <input class="form-control" id="editRegion_value" name="value" placeholder="Value" value="">
+                        </div>
+
+                        <div class="form-group">
+                          <label for="editRegion_color" class="control-label">Color</label>
+                          <input class="form-control" id="editRegion_color" name="color" placeholder="Color" value="{{color}}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Save</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </form><!-- /.modal -->
     </div>
 
-    <script src="https://cdn.auth0.com/w2/auth0-widget-3.0.8.min.js"></script>
-    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.js" rel="stylesheet" media="screen">
+    <!--<script src="https://cdn.auth0.com/w2/auth0-widget-3.0.8.min.js"></script>-->
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/kineticjs/5.0.6/kinetic.min.js"></script>
+    <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
     <script src="./lib/app.js"></script>
   </body>
 </html>

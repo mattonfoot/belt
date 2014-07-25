@@ -32,6 +32,22 @@ Region.prototype.getValue = function() {
     return this.value;
 };
 
+Region.prototype.getX = function() {
+    return this.x;
+};
+
+Region.prototype.getY = function() {
+    return this.y;
+};
+
+Region.prototype.getWidth = function() {
+    return this.width;
+};
+
+Region.prototype.getHeight = function() {
+    return this.height;
+};
+
 Region.prototype.getBoard = function() {
     return this.board;
 };
@@ -125,6 +141,11 @@ Region.onBeforeUpdate = function ( data ) {
 Region.onBeforeCreate = function( data ) {
     // data.createdBy = app.getCurrentUser()._id;
     data.createdOn = new Date();
+
+    data.width = data.width || 100;
+    data.height = data.height || 100;
+    data.x = data.x || 10;
+    data.y = data.y || 10;
 
     return data;
 };

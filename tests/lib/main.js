@@ -1,10 +1,12 @@
-var $ = require('jquery-browserify')
+var $ = require('jquery')
   , Queue = require('./queue')
   , Application = require('./application')
   , UI = require('./ui');
 
-var queue = new Queue();
-var application = new Application( queue );
-var ui = new UI( queue, $('[data-provides="ui"]') );
+var $ = $ || function(){ console.log( 'jQuery not loaded.' ); };
+
+var queue = new Queue({ debug: true });
+var ui = new UI( queue, $('[data-provides="ui"]'), {}, $ );
+var application = new Application( queue, ui, {} );
 
 module.exports = queue;

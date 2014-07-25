@@ -10,10 +10,9 @@ var Belt = require('../../lib/adapter')
 //  system
   , Commands = require('../lib/commands')
   , Queries = require('../lib/queries')
-  , Interface = require('../lib/interface')
   , Services = require('../lib/services');
 
-function Application( queue, options ) {
+function Application( queue, ui, options ) {
     this.options = options || {};
     if ( !process.browser ) {
         this.options.db = require('memdown');
@@ -22,7 +21,7 @@ function Application( queue, options ) {
     var belt = this.belt = new Belt( 'vuu_se', this.options );
 
     // initialize the services
-    var services = this.services = new Services( new Interface( queue ), new Commands( belt ), new Queries( belt ) );
+    var services = this.services = new Services( ui, new Commands( belt ), new Queries( belt ) );
 
     var factories = {
         "Board": Board
@@ -69,8 +68,14 @@ function Application( queue, options ) {
 
     function setUpEventListeners( type ) {
         listeners2.forEach(function( task ) {
-            queue.on( type + ':' + listeners, function( ev ) {
-                services[ task + type ]( ev );
+            queue.on( type.toLowerCase() + ':' + task, function( ev ) {
+                if (services[ task + type ]) {
+                    if (options.debug) {
+                        console.log( 'services.' + task + type + '()' );
+                    }
+                    
+                    services[ task + type ]( ev );
+                }
             });
         });
     }
@@ -83,6 +88,14 @@ function Application( queue, options ) {
 
         .on('wall:firsttime', function( wall ) {
             services.newBoard();
+        })
+
+        .on('region:created', function( region ) {
+            services.displayRegion( region );
+        })
+
+        .on('card:created', function( card ) {
+            services.displayCard( card );
         })
 
         ;
