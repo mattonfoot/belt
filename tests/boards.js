@@ -11,7 +11,7 @@ var should = require('chai').should()
   , Board = require('./lib/models/board')
   , Region = require('./lib/models/region')
   , Pocket = require('./lib/models/pocket')
-  , Card = require('./lib/models/card');
+  , CardLocation = require('./lib/models/cardlocation');
 
 describe('using an adapter', function() {
     var ids = {}
@@ -55,11 +55,11 @@ describe('using an adapter', function() {
             .beforeCreate( Pocket.onBeforeCreate )
             .beforeUpdate( Pocket.onBeforeUpdate );
 
-        belt.resource( 'card', Card.constructor )
-            .schema( Card.schema )
-            .validator( Card.validator )
-            .beforeCreate( Card.onBeforeCreate )
-            .beforeUpdate( Card.onBeforeUpdate );
+        belt.resource( 'cardlocation', CardLocation.constructor )
+            .schema( CardLocation.schema )
+            .validator( CardLocation.validator )
+            .beforeCreate( CardLocation.onBeforeCreate )
+            .beforeUpdate( CardLocation.onBeforeUpdate );
 
         services
             .createWall( { name: 'test wall' } )

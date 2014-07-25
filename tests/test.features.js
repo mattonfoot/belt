@@ -55,7 +55,7 @@ describe('Features', function() {
 
         var promises =[];
 
-        [ 'region', 'card', 'pocket', 'board', 'wall' ]
+        [ 'region', 'cardlocation', 'pocket', 'board', 'wall' ]
             .forEach(function( schema ) {
                 var promise = belt.findMany( schema )
                     .then(function( resources ) {

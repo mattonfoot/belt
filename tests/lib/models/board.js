@@ -7,7 +7,7 @@ function Board( data ) {
         this[prop] = data[prop];
     }
 
-    this.cards = [];
+    this.cardlocations = [];
     this.regions = [];
 
     for ( var link in data.links ) {
@@ -31,13 +31,13 @@ Board.prototype.getWall = function() {
     return this.wall;
 };
 
-Board.prototype.getCards = function() {
-    return this.cards;
+Board.prototype.getCardLocations = function() {
+    return this.cardlocations;
 };
 
-Board.prototype.addCard = function( card ) {
-    if ( !~this.cards.indexOf( card.id ) ) {
-        this.cards.push( card.id );
+Board.prototype.addCardLocation = function( cardlocation ) {
+    if ( !~this.cardlocations.indexOf( cardlocation.id ) ) {
+        this.cardlocations.push( cardlocation.id );
     }
 
     return this;
@@ -78,7 +78,7 @@ Board.constructor = function( data ) {
 Board.schema = {
     name: String
   , wall: 'wall'
-  , cards: ['card']
+  , cardlocations: ['cardlocation']
   , regions: ['region']
   , transforms: ['transform']
   , createdBy: 'user'

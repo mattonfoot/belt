@@ -2,7 +2,7 @@ var Belt = require('../../lib/adapter')
 
 //  models
   , Board = require('../lib/models/board')
-  , Card = require('../lib/models/card')
+  , CardLocation = require('../lib/models/cardlocation')
   , Pocket = require('../lib/models/pocket')
   , Region = require('../lib/models/region')
   , Wall = require('../lib/models/wall')
@@ -27,7 +27,7 @@ function Application( queue, ui, options ) {
 
     var factories = {
         "Board": Board
-      , "Card": Card
+      , "CardLocation": CardLocation
       , "Pocket": Pocket
       , "Region": Region
       , "Wall": Wall
@@ -88,7 +88,7 @@ function Application( queue, ui, options ) {
         .on('board:displayed', function( board ) {
             if (!_this._listen) return;
 
-            services.displayCards( board );
+            services.displayCardLocations( board );
             services.displayRegions( board );
         })
 
@@ -116,10 +116,10 @@ function Application( queue, ui, options ) {
             services.displayRegion( region.getId() );
         })
 
-        .on('card:created', function( card ) {
+        .on('cardlocation:created', function( cardlocation ) {
             if (!_this._listen) return;
 
-            services.displayCard( card.getId() );
+            services.displayCardLocation( cardlocation.getId() );
         })
 
         ;

@@ -1,6 +1,6 @@
 
 
-function Card( data ) {
+function CardLocation( data ) {
     for ( var prop in data ) {
         if ( prop === 'links' ) continue;
 
@@ -11,30 +11,31 @@ function Card( data ) {
         this[link] = data.links[link];
     }
 
-    this.constructor = Card;
+    this.constructor = CardLocation;
 }
 
-Card.prototype.getId = function() {
+CardLocation.prototype.getId = function() {
     return this.id;
 };
 
-Card.prototype.getPocket = function() {
+CardLocation.prototype.getPocket = function() {
     return this.pocket;
 };
 
-Card.prototype.getBoard = function() {
+CardLocation.prototype.getBoard = function() {
     return this.board;
 };
 
-Card.prototype.getPosition = function() {
+CardLocation.prototype.getPosition = function() {
     return {
+        id: this.id,
         board: this.board,
         x: this.x,
         y: this.y
     };
 };
 
-Card.prototype.moveTo = function( x, y ) {
+CardLocation.prototype.moveTo = function( x, y ) {
     if ( this.x !== x || this.y !== y ) {
         this.x = x;
         this.y = y;
@@ -43,15 +44,15 @@ Card.prototype.moveTo = function( x, y ) {
     return this;
 };
 
-Card.constructor = function( data ) {
-    if ( data instanceof Card ) {
+CardLocation.constructor = function( data ) {
+    if ( data instanceof CardLocation ) {
         return data;
     }
 
-    return new Card( data );
+    return new CardLocation( data );
 };
 
-Card.schema = {
+CardLocation.schema = {
     x: Number,
     y: Number,
     board: 'board',
@@ -62,7 +63,7 @@ Card.schema = {
   , lastModifiedOn: Date
 };
 
-Card.validator = function( data ) {
+CardLocation.validator = function( data ) {
     var validator = {
         validForUpdate: true
       , validForCreate: true
@@ -87,14 +88,14 @@ Card.validator = function( data ) {
     return validator;
 };
 
-Card.onBeforeUpdate = function ( data ) {
+CardLocation.onBeforeUpdate = function ( data ) {
     // data.lastModifiedBy = app.getCurrentUser()._id;
     data.lastModifiedOn = new Date();
 
     return data;
 };
 
-Card.onBeforeCreate = function( data ) {
+CardLocation.onBeforeCreate = function( data ) {
     // data.createdBy = app.getCurrentUser()._id;
     data.createdOn = new Date();
 
@@ -104,4 +105,4 @@ Card.onBeforeCreate = function( data ) {
     return data;
 };
 
-module.exports = Card;
+module.exports = CardLocation;

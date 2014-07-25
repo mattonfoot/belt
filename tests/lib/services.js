@@ -31,7 +31,7 @@ Services.prototype.createBoard = function( data ) {
             return _this._queries.getPocketsForWall( wall );
         })
         .then(function( pockets ) {
-            _this._commands.addPocketsToBoard( board, pockets );  // --> card:created
+            _this._commands.addPocketsToBoard( board, pockets );  // --> cardlocation:created
 
             return board;
         });
@@ -86,46 +86,46 @@ Services.prototype.selectBoard = function( wall ) {
 
 
 
-// cards
+// cardlocations
 
-// card:created
-Services.prototype.displayCard = function( id ) {
+// cardlocation:created
+Services.prototype.displayCardLocation = function( id ) {
     var _this = this;
 
     return this._queries
-        .getCard( id )
-        .then(function( card ) {
-            _this._interface.displayCard( card );  // --> card:displayed
+        .getCardLocation( id )
+        .then(function( cardlocation ) {
+            _this._interface.displayCardLocation( cardlocation );  // --> cardlocation:displayed
 
-            return card;
+            return cardlocation;
         });
 };
 
 // board:displayed
-Services.prototype.displayCards = function( board ) {
+Services.prototype.displayCardLocations = function( board ) {
     var _this = this;
 
     return this._queries
-        .getCardsForBoard( board )
-        .then(function( cards ) {
-            _this._interface.displayCards( cards );  // --> card:displayed
+        .getCardLocationsForBoard( board )
+        .then(function( cardlocations ) {
+            _this._interface.displayCardLocations( cardLocations );  // --> cardlocation:displayed
 
-            return cards;
+            return cardlocations;
         });
 };
 
-// card:move
-Services.prototype.moveCard = function( info ) {
+// cardlocation:move
+Services.prototype.moveCardLocation = function( info ) {
     var _this = this;
 
     return this._queries
-        .getCard( info.id )
-        .then(function( card ) {
-            if ( card.x != info.x || card.y != info.y ) {
-              card.x = info.x;
-              card.y = info.y;
+        .getCardLocation( info.id )
+        .then(function( cardlocation ) {
+            if ( cardlocation.x != info.x || cardlocation.y != info.y ) {
+              cardlocation.x = info.x;
+              cardlocation.y = info.y;
 
-              return _this._commands.updateCard( card );  // --> card:updated
+              return _this._commands.updateCardLocation( cardlocation );  // --> cardlocation:updated
             }
         });
 };
@@ -157,7 +157,7 @@ Services.prototype.createPocket = function( data ) {
             return _this._queries.getBoardsForWall( wall );
         })
         .then(function( boards ) {
-            _this._commands.addPocketToBoards( boards, pocket );  // --> card:created
+            _this._commands.addPocketToBoards( boards, pocket );  // --> cardlocation:created
 
             return pocket;
         });

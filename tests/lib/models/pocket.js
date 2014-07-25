@@ -7,7 +7,7 @@ function Pocket( data ) {
         this[prop] = data[prop];
     }
 
-    this.cards = [];
+    this.cardlocations = [];
     this.regions = [];
 
     for ( var link in data.links ) {
@@ -45,13 +45,13 @@ Pocket.prototype.getWall = function() {
     return this.wall;
 };
 
-Pocket.prototype.getCards = function() {
-    return this.cards;
+Pocket.prototype.getCardLocations = function() {
+    return this.cardlocations;
 };
 
-Pocket.prototype.addCard = function( card ) {
-    if ( !~this.cards.indexOf( card.id ) ) {
-        this.cards.push( card.id );
+Pocket.prototype.addCardLocation = function( cardlocation ) {
+    if ( !~this.cardlocations.indexOf( cardlocation.id ) ) {
+        this.cardlocations.push( cardlocation.id );
     }
 
     return this;
@@ -85,7 +85,7 @@ Pocket.schema = {
     mentions: String,    // [ 'mention' ] --> 'user', 'group'
     color: String,
     wall: 'wall',
-    cards: ['card'],
+    cardlocation: ['cardlocation'],
     regions: ['region']
     , createdBy: 'user'
     , createdOn: Date

@@ -110,10 +110,10 @@ UI.prototype.updateBoardSelector = function( board ) {
         .appendBefore( selector.children().last() );
 };
 
-// cards
+// cardlocations
 
-UI.prototype.displayCard = function( card, pocket ) {
-    var canvascard = new CanvasCard( this._queue, card, pocket );
+UI.prototype.displayCardLocation = function( cardlocation, pocket ) {
+    var canvascard = new CanvasCard( this._queue, cardlocation, pocket );
 
     this._canvasboard.addCard( canvascard );
 };

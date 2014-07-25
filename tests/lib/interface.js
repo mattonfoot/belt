@@ -17,7 +17,7 @@ Interface.prototype.displayBoard = function( board ) {
 
     this._board = board;
     this._regions = [];
-    this._cards = [];
+    this._cardlocations = [];
 
     this._queue.trigger( 'board:displayed', board );
 
@@ -36,21 +36,21 @@ Interface.prototype.displayBoardSelector = function( boards ) {
     this._queue.trigger( 'boardselector:displayed', boards );
 };
 
-// cards
+// cardlocations
 
-Interface.prototype.displayCard = function( card ) {
-    if ( !this._board || card.getBoard() !== this._board.getId() || ~this._cards.indexOf( card.getId() )) return;
+Interface.prototype.displayCardLocation = function( cardlocation ) {
+    if ( !this._board || card.getBoard() !== this._board.getId() || ~this._cardlocations.indexOf( cardlocation.getId() )) return;
 
-    this._cards.push( card.getId() );
+    this._cardlocations.push( cardlocation.getId() );
 
-    this._queue.trigger( 'card:displayed', card );
+    this._queue.trigger( 'cardlocation:displayed', cardlocation );
 };
 
-Interface.prototype.displayCards = function( cards ) {
+Interface.prototype.displayCardLocations = function( cardlocations ) {
     var _this = this;
 
-    cards.forEach(function( card ) {
-        _this.displayCard( card );
+    cardlocations.forEach(function( cardlocation ) {
+        _this.displayCardLocation( cardlocation );
     });
 };
 
@@ -93,7 +93,7 @@ Interface.prototype.displayRegionEditor = function( region ) {
 Interface.prototype.displayWall = function( wall ) {
     this._wall = wall;
     this._regions = [];
-    this._cards = [];
+    this._cardlocations = [];
     delete this._board;
 
     this._queue.trigger( 'wall:displayed', wall );

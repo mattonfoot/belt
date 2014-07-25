@@ -69,7 +69,7 @@ module.exports = function( should, RSVP, Promise, debug, queue, ui, application,
 
                         queue.once( 'board:displayed', onBoardDisplayed);
 
-                        queue.once( 'card:created', onCardCreated);
+                        queue.once( 'cardlocation:created', onCardCreated);
 
                         queue.trigger( 'board:create', { wall: storedId, name: storedName } );
                     })
@@ -120,7 +120,7 @@ module.exports = function( should, RSVP, Promise, debug, queue, ui, application,
                     calls[4].event.should.be.equal( 'board:added' );
                     calls[5].event.should.be.equal( 'board:displayed' );
                     calls[6].event.should.be.equal( 'controls:enabled' );
-                    calls[7].event.should.be.equal( 'card:created' );
+                    calls[7].event.should.be.equal( 'cardlocation:created' );
 
                     done();
                 }

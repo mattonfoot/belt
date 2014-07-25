@@ -32,26 +32,26 @@ Queries.prototype.getBoardsForWall = function( wall ) {
     });
 };
 
-Queries.prototype.getCard = function( cardid ) {
+Queries.prototype.getCardLocation = function( id ) {
     var _this = this;
 
     return new Promise(function( resolve, reject ) {
-        _this._db.find( 'card', cardid )
+        _this._db.find( 'cardlocation', id )
             .then( resolve )
             .catch( reject );
     });
 };
 
-Queries.prototype.getCardsForBoard = function( board ) {
+Queries.prototype.getCardLocationsForBoard = function( board ) {
     var _this = this
-      , cardids = board.getCards();
+      , ids = board.getCardLocations();
 
     return new Promise(function( resolve, reject ) {
-        if (!cardids.length) {
+        if (!ids.length) {
             resolve([]);
         }
 
-        _this._db.findMany( 'card', cardids )
+        _this._db.findMany( 'cardlocation', ids )
             .then( resolve )
             .catch( reject );
     });

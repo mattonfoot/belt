@@ -7,7 +7,7 @@ function Commands( adapter ) {
     this._db = adapter;
 }
 
-var models = [ 'Board', 'Card', 'Pocket', 'Region', 'Wall' ];
+var models = [ 'Board', 'CardLocation', 'Pocket', 'Region', 'Wall' ];
 var commands = [ 'create', 'update' ];
 
 commands.forEach(function( command ) {
@@ -22,7 +22,7 @@ Commands.prototype.addPocketsToBoard = function( board, pockets ) {
     var _this = this;
 
     var promises = pockets.map(function( pocket ) {
-        return _this.createCard( { board: board.getId(), pocket: pocket.getId() } );
+        return _this.createCardLocation( { board: board.getId(), pocket: pocket.getId() } );
     });
 
     return RSVP.all( promises );
@@ -32,7 +32,7 @@ Commands.prototype.addPocketToBoards = function( boards, pocket ) {
     var _this = this;
 
     var promises = boards.map(function( board ) {
-        return _this.createCard( { board: board.getId(), pocket: pocket.getId() } );
+        return _this.createCardLocation( { board: board.getId(), pocket: pocket.getId() } );
     });
 
     return RSVP.all( promises );
