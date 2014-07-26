@@ -14742,7 +14742,8 @@ var Belt = require('../../lib/adapter')
 //  system
   , Commands = require('../lib/commands')
   , Queries = require('../lib/queries')
-  , Services = require('../lib/services');
+  , Services = require('../lib/services')
+  , MovementTracker = require('../lib/trackMovement');
 
 function Application( queue, ui, options ) {
     this.options = options || {};
@@ -14753,7 +14754,10 @@ function Application( queue, ui, options ) {
     var belt = this.belt = new Belt( 'vuu_se', this.options );
 
     // initialize the services
-    var services = this.services = new Services( ui, new Commands( belt ), new Queries( belt ) );
+    var commands = new Commands( belt );
+    var queries = new Queries( belt );
+    var services = this.services = new Services( ui, commands, queries );
+    var tracker = this.tracker = new MovementTracker( queue, commands, queries );
 
     this._listen = true;
 
@@ -14851,7 +14855,31 @@ function Application( queue, ui, options ) {
         .on('cardlocation:created', function( cardlocation ) {
             if (!_this._listen) return;
 
-            services.displayCardLocation( cardlocation.getId() );
+            services.displayCardLocation( cardlocation );
+        })
+
+        .on( 'cardlocation:moved', function( location ) {
+            if (!_this._listen) return;
+
+            tracker.trackCardMovement( cardlocation );
+        })
+
+        .on( 'cardlocation:updated', function( location ) {
+            if (!_this._listen) return;
+
+            tracker.trackCardMovement( cardlocation );
+        })
+
+        .on( 'region:moved', function( region ) {
+            if (!_this._listen) return;
+
+            tracker.trackRegionMovement( region );
+        })
+
+        .on( 'region:updated', function( region ) {
+            if (!_this._listen) return;
+
+            tracker.trackRegionMovement( region );
         })
 
         ;
@@ -14868,7 +14896,7 @@ Application.prototype.startListening = function() {
 module.exports = Application;
 
 }).call(this,require("JkpR2F"))
-},{"../../lib/adapter":1,"../lib/commands":100,"../lib/models/board":103,"../lib/models/cardlocation":104,"../lib/models/pocket":105,"../lib/models/region":106,"../lib/models/wall":107,"../lib/queries":108,"../lib/services":110,"JkpR2F":10,"memdown":13}],100:[function(require,module,exports){
+},{"../../lib/adapter":1,"../lib/commands":100,"../lib/models/board":103,"../lib/models/cardlocation":104,"../lib/models/pocket":105,"../lib/models/region":106,"../lib/models/wall":107,"../lib/queries":108,"../lib/services":110,"../lib/trackMovement":114,"JkpR2F":10,"memdown":13}],100:[function(require,module,exports){
 var RSVP = require('rsvp')
   , Promise = RSVP.Promise;
 
@@ -15082,7 +15110,7 @@ var application = new Application( queue, interface, {} );
 
 module.exports = queue;
 
-},{"./application":99,"./interface":101,"./queue":109,"./ui":114}],103:[function(require,module,exports){
+},{"./application":99,"./interface":101,"./queue":109,"./ui":115}],103:[function(require,module,exports){
 
 
 function Board( data ) {
@@ -16760,6 +16788,125 @@ function CanvasRegion( queue, region ) {
 module.exports = CanvasRegion;
 
 },{}],114:[function(require,module,exports){
+
+var cardHeight = 65;
+var cardWidth = 100;
+
+function MovementTracker( queue, commands, queries ) {
+    this._queue = queue;
+    this._commands = commands;
+    this._queries = queries;
+
+    this._regionalcards = {};
+}
+
+MovementTracker.prototype.trackCardMovement = function( card ) {
+    var _this = this;
+
+    this._queries
+        .getBoard( card.getBoard() )
+        .then(function( board ) {
+            return _this.queries.getRegionsForBoard( board );
+        })
+        .then(function( regions ) {
+            regions.forEach(function( region ) {
+                if ( !cardIsInRegion.call( _this, card, region ) ) {
+                    markPocketAsNotInRegion.call( _this, card.links.pocket, region );
+                }
+            });
+
+            return regions;
+        })
+        .then(function( regions ) {
+            regions.forEach(function( region ) {
+                if ( cardIsInRegion.call( _this, card, region ) ) {
+                    markPocketAsInRegion.call( this, card.links.pocket, region );
+                }
+            });
+        });
+};
+
+MovementTracker.prototype.trackRegionMovement = function( region ) {
+    var _this = this;
+
+    this._queries
+        .getBoard( card.getBoard() )
+        .then(function( board ) {
+            return _this.queries.getCardsForBoard( board );
+        })
+        .then(function( cards ) {
+            cards.forEach(function( card ) {
+                if ( !cardIsInRegion.call( _this, card, region ) ) {
+                    markPocketAsNotInRegion.call( _this, card.links.pocket, region );
+                }
+            });
+
+            return regions;
+        })
+        .then(function( cards ) {
+            cards.forEach(function( card ) {
+                if ( cardIsInRegion.call( _this, card, region ) ) {
+                    markPocketAsInRegion.call( _this, card.links.pocket, region );
+                }
+            });
+        });
+};
+
+function cardIsInRegion( card, region ) {
+    var cardX = (card.x + (cardHeight / 2))
+      , cardY = (card.y + (cardWidth / 2))
+      , inLeft = cardX > region.x
+      , inRight = cardX < (region.x + region.width)
+      , inTop = cardY > region.y
+      , inBase = cardY < (region.y + region.height);
+
+    return ( inLeft && inRight && inTop && inBase );
+}
+
+function markPocketAsInRegion( pocketid, region ) {
+    var _this = this;
+
+    return this._queries
+        .getPocket( pocketid )
+        .then(function( pocket ) {
+            var regions = pocket.getRegions();
+
+            pocket.addRegion( region.getId() );
+
+            if (pocket.getRegions().length > regions.length) {
+                return _this._commands
+                    .updatePocket( pocket )
+                    .then(function() {
+                        _this._queue.emit( 'pocket:regionenter', { pocket: pocket, region: region } );
+                    });
+
+            }
+        });
+}
+
+function markPocketAsNotInRegion( pocketid, region ) {
+    var _this = this;
+
+    return this._queries
+        .getPocket( pocketid )
+        .then(function( pocket ) {
+            var regions = pocket.getRegions();
+
+            pocket.removeRegion( region.getId() );
+
+            if (pocket.getRegions().length < regions.length) {
+                return _this._commands
+                    .updatePocket( pocket )
+                    .then(function() {
+                        app.queue.emit( 'pocket:regionexit', { pocket: pocket, region: region } );
+                    });
+            }
+        });
+}
+
+module.exports = MovementTracker;
+
+},{}],115:[function(require,module,exports){
 var CanvasBoard = require('./shapes/board')
   , CanvasCard = require('./shapes/card')
   , CanvasRegion = require('./shapes/region');
