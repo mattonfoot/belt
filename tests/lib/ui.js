@@ -70,16 +70,6 @@ UI.prototype.displayBoard = function( board ) {
     this._canvasregions = [];
 };
 
-UI.prototype.addBoard = function( boards ) {
-    var options = boards.map(function( board ) {
-        return '<li><a href="#'+ board.getId() +'" data-display="board">'+ board.getName() +'</a></li>';
-    });
-
-    options.push('<li><button type="button" class="btn btn-default" data-toggle="modal" data-target="#newBoard" data-new="board" data-parent="'+ this._wall.getId() +'" title="Add Board"><i class="glyphicon glyphicon-plus"></i></button></li>');
-
-    this._$element.find('[data-selector="board"]').empty().append( options.join('') );
-};
-
 UI.prototype.displayBoardCreator = function( wall ) {
     this._boardcreator = this._boardcreator || this._$element.find('[data-create="board"]');
 
@@ -99,6 +89,18 @@ UI.prototype.displayBoardEditor = function( board ) {
     this._boardeditor.find('[name="wall"]').val( board.getWall() );
 
     this._boardeditor.modal( 'show' );
+};
+
+UI.prototype.displayBoardSelector = function( wall, boards ) {
+    var selector = this._$element.find('[data-selector="board"]');
+
+    var options = boards.map(function( board ) {
+        return '<li><a href="#'+ board.getId() +'" data-display="board">'+ board.getName() +'</a></li>';
+    });
+
+    options.push('<li><button type="button" class="btn btn-default" data-new="board" data-parent="'+ wall.getId() +'" title="Add Board"><i class="glyphicon glyphicon-plus"></i></button></li>');
+
+    selector.empty().append( options.join('') );
 };
 
 UI.prototype.updateBoardSelector = function( board ) {
@@ -201,11 +203,15 @@ UI.prototype.displayWallEditor = function( wall ) {
 };
 
 UI.prototype.displayWallSelector = function( walls ) {
+    this._wallselector = this._wallselector || this._$element.find('[data-selector="wall"]');
+
     var options = walls.map(function( wall ) {
         return '<a href="#'+ wall.getId() +'" class="list-group-item" data-display="wall" data-dismiss="modal">'+ wall.getName() +'</a>';
     });
 
-    this._$element.find('[data-selector="wall"]').empty().append( options.join('') );
+    this._wallselector.find('[data-options="list"]').empty().append( options.join('') );
+
+    this._wallselector.modal( 'show' );
 };
 
 // controls

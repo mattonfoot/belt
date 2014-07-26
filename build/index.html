@@ -32,13 +32,13 @@
         <div class="container" data-viewer="wall"></div>
 
         <nav class="navbar navbar-default navbar-fixed-bottom" role="navigation">
-            <button type="button" class="btn btn-default" data-new="region" data-toggle="modal" data-target="#newRegion" disabled><i class="glyphicon glyphicon-plus"></i> New region</button>
-            <button type="button" class="btn btn-default" data-new="pocket" data-toggle="modal" data-target="#newPocket" disabled><i class="glyphicon glyphicon-plus"></i> New card</button>
-            <button type="button" class="btn btn-default" data-select="wall" data-toggle="modal" data-target="#selectWall">View walls</button>
+            <button type="button" class="btn btn-default" data-new="region" disabled><i class="glyphicon glyphicon-plus"></i> New region</button>
+            <button type="button" class="btn btn-default" data-new="pocket" disabled><i class="glyphicon glyphicon-plus"></i> New card</button>
+            <button type="button" class="btn btn-default" data-select="wall">View walls</button>
             <button type="button" class="btn btn-default auth-login" title="Login to vuu.se" data-auth="login">Login</button>
         </nav>
 
-        <div class="modal fade" id="selectWall" tabindex="-1" role="dialog" aria-labelledby="selectWallLabel" aria-hidden="true">
+        <div class="modal fade" id="selectWall" data-selector="wall" tabindex="-1" role="dialog" aria-labelledby="selectWallLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -48,7 +48,7 @@
                     <div class="modal-body">
                         <p>Select a wall to view:</p>
 
-                        <div class="list-group" data-selector="wall"></div>
+                        <div class="list-group" data-options="list"></div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal" data-new="wall" data-toggle="modal" data-target="#newWall"><i class="glyphicon glyphicon-plus"></i> New Wall</button>
@@ -217,6 +217,55 @@
                         <div class="form-group">
                           <label for="editRegion_color" class="control-label">Color</label>
                           <input class="form-control" id="editRegion_color" name="color" placeholder="Color" value="{{color}}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Save</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </form><!-- /.modal -->
+
+
+
+        <form class="modal fade" id="newCard" data-create="pocket" tabindex="-1" role="dialog" aria-labelledby="newCardLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="newCardLabel">CREATE CARD: </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="wall" value="">
+
+                        <div class="form-group">
+                          <label for="newCard_title" class="control-label">Title</label>
+                          <input class="form-control" id="newCard_title" name="title" placeholder="Title" value="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Create</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </form><!-- /.modal -->
+
+        <form class="modal fade" id="editCard" data-update="pocket" tabindex="-1" role="dialog" aria-labelledby="newCard_label" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="newCard_label">EDIT CARD: </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="id" value="">
+                        <input type="hidden" name="wall" value="">
+
+                        <div class="form-group">
+                          <label for="editCard_title" class="control-label">Title</label>
+                          <input class="form-control" id="editCard_title" name="title" placeholder="Title" value="">
                         </div>
                     </div>
                     <div class="modal-footer">

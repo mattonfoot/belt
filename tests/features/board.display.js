@@ -13,7 +13,7 @@ module.exports = function( should, RSVP, Promise, debug, queue, ui, application,
                     .then( onWallCreated )
                     .then( onWallSelected )
                     .then( onBoardCreated )
-                    .then( onBoard3Created )
+                    .then( onBoard2Created )
                     .catch( done );
 
 
@@ -33,7 +33,7 @@ module.exports = function( should, RSVP, Promise, debug, queue, ui, application,
                         .createBoard( { wall: storedParentId, name: storedName } );
                 }
 
-                function onBoard3Created( board ) {
+                function onBoard2Created( board ) {
                     storedId = board.getId();
                     board.getName().should.be.equal( storedName );
 

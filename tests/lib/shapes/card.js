@@ -18,27 +18,25 @@ var size = {    // issue is that the server needs to know this as well
 
 // constructor
 
-function CanvasCard( queue, card, pocket ) {
+function CanvasCard( queue, location, pocket ) {
     var shape = new Kinetic.Group({
-      id: card.id,
-      x: card.x || 5,
-      y: card.y || 5,
+      id: location.id,
+      x: location.x || 5,
+      y: location.y || 5,
       draggable: true
     });
 
     var cardback = __createCardback( size.width, size.height, (pocket.color || colors.fill), shadow.color );
     var cardnumber = __createIdText( pocket.cardnumber );
-    var cardtitle = __createTitleText( pocket.title );
-    var tag = __createTag();
+    var cardtitle = __createTitleText( pocket.getTitle() );
 
     shape.add( cardback );
     shape.add( cardnumber );
     shape.add( cardtitle );
-    shape.add( tag );
 
     queue
-      .on( 'card:updated', function( data ) {
-        if ( card.id === data.id &&
+      .on( 'cardlocation:updated', function( data ) {
+        if ( location.id === data.id &&
             ( shape.getX() != data.x || shape.getY() != data.y ) ) {
           __moveTo( data.x, data.y );
         }
@@ -53,15 +51,15 @@ function CanvasCard( queue, card, pocket ) {
       .on('mousedown touchstart', function() {
         __displayActiveState();
 
-        queue.trigger( 'card:activate', card );
+        queue.trigger( 'cardlocation:activate', location );
       })
       .on('mouseup touchend', function() {
         __displayInactiveState();
 
-        queue.trigger( 'card:deactivate', card );
+        queue.trigger( 'cardlocation:deactivate', location );
       })
       .on('dragend', function() {
-        queue.trigger( 'card:move', { id: card.getId(), x: shape.getX(), y: shape.getY() } );
+        queue.trigger( 'cardlocation:move', { id: location.getId(), x: shape.getX(), y: shape.getY() } );
       })
       .on('dblclick dbltap', function( e ) {
         e.cancelBubble = true;

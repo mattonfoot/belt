@@ -94,10 +94,8 @@ Services.prototype.displayCardLocation = function( id ) {
 
     return this._queries
         .getCardLocation( id )
-        .then(function( cardlocation ) {
-            _this._interface.displayCardLocation( cardlocation );  // --> cardlocation:displayed
-
-            return cardlocation;
+        .then(function( location ) {
+            return callDisplayCardLocationWithPocket.call( _this, location );
         });
 };
 
@@ -107,12 +105,25 @@ Services.prototype.displayCardLocations = function( board ) {
 
     return this._queries
         .getCardLocationsForBoard( board )
-        .then(function( cardlocations ) {
-            _this._interface.displayCardLocations( cardLocations );  // --> cardlocation:displayed
+        .then(function( locations ) {
+            var promises = locations.map(function( location ) {
+                return callDisplayCardLocationWithPocket.call( _this, location );
+            });
 
-            return cardlocations;
+            return RSVP.all( promises );
         });
 };
+
+function callDisplayCardLocationWithPocket( location ) {
+    var _this = this;
+
+    return this._queries.getPocket( location.getPocket() )
+        .then(function( pocket ) {
+            _this._interface.displayCardLocation( location, pocket );  // --> cardlocation:displayed
+
+            return location;
+        });
+}
 
 // cardlocation:move
 Services.prototype.moveCardLocation = function( info ) {

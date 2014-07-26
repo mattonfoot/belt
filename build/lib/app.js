@@ -14734,7 +14734,7 @@ var Belt = require('../../lib/adapter')
 
 //  models
   , Board = require('../lib/models/board')
-  , Card = require('../lib/models/card')
+  , CardLocation = require('../lib/models/cardlocation')
   , Pocket = require('../lib/models/pocket')
   , Region = require('../lib/models/region')
   , Wall = require('../lib/models/wall')
@@ -14755,9 +14755,11 @@ function Application( queue, ui, options ) {
     // initialize the services
     var services = this.services = new Services( ui, new Commands( belt ), new Queries( belt ) );
 
+    this._listen = true;
+
     var factories = {
         "Board": Board
-      , "Card": Card
+      , "CardLocation": CardLocation
       , "Pocket": Pocket
       , "Region": Region
       , "Wall": Wall
@@ -14790,6 +14792,8 @@ function Application( queue, ui, options ) {
 
     this.constructor = Application;
 
+    var _this = this;
+
     // setup events to trigger services
 
     var listeners2 = [ 'new', 'create', 'edit', 'update', 'select', 'display', 'unlink', 'move', 'resize' ];
@@ -14801,42 +14805,70 @@ function Application( queue, ui, options ) {
     function setUpEventListeners( type ) {
         listeners2.forEach(function( task ) {
             queue.on( type.toLowerCase() + ':' + task, function( ev ) {
-                if (services[ task + type ]) {
-                    if (options.debug) {
-                        console.log( 'services.' + task + type + '()' );
-                    }
-                    
-                    services[ task + type ]( ev );
+                if (!_this._listen || !services[ task + type ]) return;
+
+                if (options.debug) {
+                    console.log( 'services.' + task + type + '()' );
                 }
+
+                services[ task + type ]( ev );
             });
         });
     }
 
     queue
         .on('board:displayed', function( board ) {
-            services.displayCards( board );
+            if (!_this._listen) return;
+
+            services.displayCardLocations( board );
             services.displayRegions( board );
         })
 
         .on('wall:firsttime', function( wall ) {
+            if (!_this._listen) return;
+
             services.newBoard();
         })
 
-        .on('region:created', function( region ) {
-            services.displayRegion( region );
+        .on('wall:created', function( wall ) {
+            if (!_this._listen) return;
+
+            services.displayWall( wall.getId() );
         })
 
-        .on('card:created', function( card ) {
-            services.displayCard( card );
+        .on('board:created', function( board ) {
+            if (!_this._listen) return;
+
+            services.displayBoard( board.getId() );
+        })
+
+        .on('region:created', function( region ) {
+            if (!_this._listen) return;
+
+            services.displayRegion( region.getId() );
+        })
+
+        .on('cardlocation:created', function( cardlocation ) {
+            if (!_this._listen) return;
+
+            services.displayCardLocation( cardlocation.getId() );
         })
 
         ;
 }
 
+Application.prototype.pauseListenting = function() {
+    this._listen = false;
+};
+
+Application.prototype.startListening = function() {
+    this._listen = true;
+};
+
 module.exports = Application;
 
 }).call(this,require("JkpR2F"))
-},{"../../lib/adapter":1,"../lib/commands":100,"../lib/models/board":102,"../lib/models/card":103,"../lib/models/pocket":104,"../lib/models/region":105,"../lib/models/wall":106,"../lib/queries":107,"../lib/services":109,"JkpR2F":10,"memdown":13}],100:[function(require,module,exports){
+},{"../../lib/adapter":1,"../lib/commands":100,"../lib/models/board":103,"../lib/models/cardlocation":104,"../lib/models/pocket":105,"../lib/models/region":106,"../lib/models/wall":107,"../lib/queries":108,"../lib/services":110,"JkpR2F":10,"memdown":13}],100:[function(require,module,exports){
 var RSVP = require('rsvp')
   , Promise = RSVP.Promise;
 
@@ -14846,7 +14878,7 @@ function Commands( adapter ) {
     this._db = adapter;
 }
 
-var models = [ 'Board', 'Card', 'Pocket', 'Region', 'Wall' ];
+var models = [ 'Board', 'CardLocation', 'Pocket', 'Region', 'Wall' ];
 var commands = [ 'create', 'update' ];
 
 commands.forEach(function( command ) {
@@ -14861,7 +14893,7 @@ Commands.prototype.addPocketsToBoard = function( board, pockets ) {
     var _this = this;
 
     var promises = pockets.map(function( pocket ) {
-        return _this.createCard( { board: board.getId(), pocket: pocket.getId() } );
+        return _this.createCardLocation( { board: board.getId(), pocket: pocket.getId() } );
     });
 
     return RSVP.all( promises );
@@ -14871,7 +14903,7 @@ Commands.prototype.addPocketToBoards = function( boards, pocket ) {
     var _this = this;
 
     var promises = boards.map(function( board ) {
-        return _this.createCard( { board: board.getId(), pocket: pocket.getId() } );
+        return _this.createCardLocation( { board: board.getId(), pocket: pocket.getId() } );
     });
 
     return RSVP.all( promises );
@@ -14880,20 +14912,177 @@ Commands.prototype.addPocketToBoards = function( boards, pocket ) {
 module.exports = Commands;
 
 },{"rsvp":72}],101:[function(require,module,exports){
+// Commands
+
+function Interface( queue, ui ) {
+    this._queue = queue;
+    this._ui = ui;
+}
+
+Interface.prototype.addBoard = function( board ) {
+    this.displayBoard( board );
+
+    if (this._ui) this._ui.displayBoardSelector( this._wall, board );
+
+    this._queue.trigger( 'board:added', board );
+};
+
+Interface.prototype.displayBoard = function( board ) {
+    if ( !this._wall || board.getWall() !== this._wall.getId() ) return;
+
+    this._board = board;
+    this._regions = [];
+    this._cardlocations = [];
+
+    if (this._ui) this._ui.displayBoard( board );
+
+    this._queue.trigger( 'board:displayed', board );
+
+    this.enableControls();
+};
+
+Interface.prototype.displayBoardCreator = function() {
+    if ( !this._wall ) return;
+
+    if (this._ui) this._ui.displayBoardCreator( this._wall );
+
+    this._queue.trigger( 'boardcreator:displayed' );
+};
+
+Interface.prototype.displayBoardEditor = function( board ) {
+    if (this._ui) this._ui.displayBoardEditor( board );
+
+    this._queue.trigger( 'boardeditor:displayed', board );
+};
+
+Interface.prototype.displayBoardSelector = function( boards ) {
+    if (this._ui) this._ui.displayBoardSelector( this._wall, boards );
+
+    this._queue.trigger( 'boardselector:displayed', boards );
+};
+
+// cardlocations
+
+Interface.prototype.displayCardLocation = function( location, pocket ) {
+    if ( !this._board || location.getBoard() !== this._board.getId() || ~this._cardlocations.indexOf( location.getId() )) return;
+
+    this._cardlocations.push( location.getId() );
+
+    if (this._ui) this._ui.displayCardLocation( location, pocket );
+
+    this._queue.trigger( 'cardlocation:displayed', location );
+};
+
+Interface.prototype.displayPocketCreator = function() {
+    if ( !this._wall ) return;
+
+    if (this._ui) this._ui.displayPocketCreator( this._wall );
+
+    this._queue.trigger( 'pocketcreator:displayed' );
+};
+
+Interface.prototype.displayPocketEditor = function( pocket ) {
+    if (this._ui) this._ui.displayPocketEditor( pocket );
+
+    this._queue.trigger( 'pocketeditor:displayed', pocket );
+};
+
+// regions
+
+Interface.prototype.displayRegion = function( region ) {
+    if ( !this._board || region.getBoard() !== this._board.getId() || ~this._regions.indexOf( region.getId() )) return;
+
+    this._regions.push( region.getId() );
+
+    if (this._ui) this._ui.displayRegion( region );
+
+    this._queue.trigger( 'region:displayed', region );
+};
+
+Interface.prototype.displayRegions = function( regions ) {
+    var _this = this;
+
+    regions.forEach(function( region ) {
+        _this.displayRegion( region );
+    });
+};
+
+Interface.prototype.displayRegionCreator = function() {
+    if ( !this._board ) return;
+
+    if (this._ui) this._ui.displayRegionCreator( this._board );
+
+    this._queue.trigger( 'regioncreator:displayed' );
+};
+
+Interface.prototype.displayRegionEditor = function( region ) {
+    if (this._ui) this._ui.displayRegionEditor( region );
+
+    this._queue.trigger( 'regioneditor:displayed', region );
+};
+
+// walls
+
+Interface.prototype.displayWall = function( wall ) {
+    this._wall = wall;
+    this._regions = [];
+    this._cardlocations = [];
+    delete this._board;
+
+    if (this._ui) this._ui.displayWall( wall );
+
+    this._queue.trigger( 'wall:displayed', wall );
+};
+
+Interface.prototype.displayWallCreator = function() {
+    if (this._ui) this._ui.displayWallCreator();
+
+    this._queue.trigger( 'wallcreator:displayed' );
+};
+
+Interface.prototype.displayWallEditor = function( wall ) {
+    if (this._ui) this._ui.displayWallEditor( wall );
+
+    this._queue.trigger( 'walleditor:displayed', wall );
+};
+
+Interface.prototype.displayWallSelector = function( walls ) {
+    if (this._ui) this._ui.displayWallSelector( walls );
+
+    this._queue.trigger( 'wallselector:displayed', walls );
+};
+
+Interface.prototype.notifyWallFirstTime = function( wall ) {
+    this._queue.trigger( 'wall:firsttime', wall );
+
+    this.displayBoardCreator();
+};
+
+Interface.prototype.enableControls = function( data ) {
+    if (this._ui) this._ui.enableControls( data );
+
+    this._queue.trigger( 'controls:enabled' );
+};
+
+module.exports = Interface;
+
+},{}],102:[function(require,module,exports){
 var $ = window.$
   , Queue = require('./queue')
   , Application = require('./application')
+  , Interface = require('./interface')
   , UI = require('./ui');
 
 var $ = $ || function(){ console.log( 'jQuery not loaded.' ); };
 
 var queue = new Queue({ debug: true });
 var ui = new UI( queue, $('[data-provides="ui"]'), {}, $ );
-var application = new Application( queue, ui, {} );
+var interface = new Interface( queue, ui );
+var application = new Application( queue, interface, {} );
 
 module.exports = queue;
 
-},{"./application":99,"./queue":108,"./ui":113}],102:[function(require,module,exports){
+},{"./application":99,"./interface":101,"./queue":109,"./ui":114}],103:[function(require,module,exports){
 
 
 function Board( data ) {
@@ -14903,7 +15092,7 @@ function Board( data ) {
         this[prop] = data[prop];
     }
 
-    this.cards = [];
+    this.cardlocations = [];
     this.regions = [];
 
     for ( var link in data.links ) {
@@ -14927,13 +15116,13 @@ Board.prototype.getWall = function() {
     return this.wall;
 };
 
-Board.prototype.getCards = function() {
-    return this.cards;
+Board.prototype.getCardLocations = function() {
+    return this.cardlocations;
 };
 
-Board.prototype.addCard = function( card ) {
-    if ( !~this.cards.indexOf( card.id ) ) {
-        this.cards.push( card.id );
+Board.prototype.addCardLocation = function( cardlocation ) {
+    if ( !~this.cardlocations.indexOf( cardlocation.id ) ) {
+        this.cardlocations.push( cardlocation.id );
     }
 
     return this;
@@ -14974,7 +15163,7 @@ Board.constructor = function( data ) {
 Board.schema = {
     name: String
   , wall: 'wall'
-  , cards: ['card']
+  , cardlocations: ['cardlocation']
   , regions: ['region']
   , transforms: ['transform']
   , createdBy: 'user'
@@ -15026,10 +15215,10 @@ Board.onBeforeCreate = function( data ) {
 
 module.exports = Board;
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 
 
-function Card( data ) {
+function CardLocation( data ) {
     for ( var prop in data ) {
         if ( prop === 'links' ) continue;
 
@@ -15040,30 +15229,31 @@ function Card( data ) {
         this[link] = data.links[link];
     }
 
-    this.constructor = Card;
+    this.constructor = CardLocation;
 }
 
-Card.prototype.getId = function() {
+CardLocation.prototype.getId = function() {
     return this.id;
 };
 
-Card.prototype.getPocket = function() {
+CardLocation.prototype.getPocket = function() {
     return this.pocket;
 };
 
-Card.prototype.getBoard = function() {
+CardLocation.prototype.getBoard = function() {
     return this.board;
 };
 
-Card.prototype.getPosition = function() {
+CardLocation.prototype.getPosition = function() {
     return {
+        id: this.id,
         board: this.board,
         x: this.x,
         y: this.y
     };
 };
 
-Card.prototype.moveTo = function( x, y ) {
+CardLocation.prototype.moveTo = function( x, y ) {
     if ( this.x !== x || this.y !== y ) {
         this.x = x;
         this.y = y;
@@ -15072,15 +15262,15 @@ Card.prototype.moveTo = function( x, y ) {
     return this;
 };
 
-Card.constructor = function( data ) {
-    if ( data instanceof Card ) {
+CardLocation.constructor = function( data ) {
+    if ( data instanceof CardLocation ) {
         return data;
     }
 
-    return new Card( data );
+    return new CardLocation( data );
 };
 
-Card.schema = {
+CardLocation.schema = {
     x: Number,
     y: Number,
     board: 'board',
@@ -15091,7 +15281,7 @@ Card.schema = {
   , lastModifiedOn: Date
 };
 
-Card.validator = function( data ) {
+CardLocation.validator = function( data ) {
     var validator = {
         validForUpdate: true
       , validForCreate: true
@@ -15116,14 +15306,14 @@ Card.validator = function( data ) {
     return validator;
 };
 
-Card.onBeforeUpdate = function ( data ) {
+CardLocation.onBeforeUpdate = function ( data ) {
     // data.lastModifiedBy = app.getCurrentUser()._id;
     data.lastModifiedOn = new Date();
 
     return data;
 };
 
-Card.onBeforeCreate = function( data ) {
+CardLocation.onBeforeCreate = function( data ) {
     // data.createdBy = app.getCurrentUser()._id;
     data.createdOn = new Date();
 
@@ -15133,9 +15323,9 @@ Card.onBeforeCreate = function( data ) {
     return data;
 };
 
-module.exports = Card;
+module.exports = CardLocation;
 
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 
 
 function Pocket( data ) {
@@ -15145,7 +15335,7 @@ function Pocket( data ) {
         this[prop] = data[prop];
     }
 
-    this.cards = [];
+    this.cardlocations = [];
     this.regions = [];
 
     for ( var link in data.links ) {
@@ -15183,13 +15373,13 @@ Pocket.prototype.getWall = function() {
     return this.wall;
 };
 
-Pocket.prototype.getCards = function() {
-    return this.cards;
+Pocket.prototype.getCardLocations = function() {
+    return this.cardlocations;
 };
 
-Pocket.prototype.addCard = function( card ) {
-    if ( !~this.cards.indexOf( card.id ) ) {
-        this.cards.push( card.id );
+Pocket.prototype.addCardLocation = function( cardlocation ) {
+    if ( !~this.cardlocations.indexOf( cardlocation.id ) ) {
+        this.cardlocations.push( cardlocation.id );
     }
 
     return this;
@@ -15223,7 +15413,7 @@ Pocket.schema = {
     mentions: String,    // [ 'mention' ] --> 'user', 'group'
     color: String,
     wall: 'wall',
-    cards: ['card'],
+    cardlocation: ['cardlocation'],
     regions: ['region']
     , createdBy: 'user'
     , createdOn: Date
@@ -15272,7 +15462,7 @@ Pocket.onBeforeCreate = function( data ) {
 
 module.exports = Pocket;
 
-},{}],105:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 
 
 function Region( data ) {
@@ -15427,7 +15617,7 @@ Region.onBeforeCreate = function( data ) {
 
 module.exports = Region;
 
-},{}],106:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 function Wall( data ) {
     for ( var prop in data ) {
         if ( prop === 'links' ) continue;
@@ -15532,7 +15722,7 @@ Wall.onBeforeCreate = function( data ) {
 
 module.exports = Wall;
 
-},{}],107:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 var RSVP = require('rsvp')
   , Promise = RSVP.Promise;
 
@@ -15567,26 +15757,26 @@ Queries.prototype.getBoardsForWall = function( wall ) {
     });
 };
 
-Queries.prototype.getCard = function( cardid ) {
+Queries.prototype.getCardLocation = function( id ) {
     var _this = this;
 
     return new Promise(function( resolve, reject ) {
-        _this._db.find( 'card', cardid )
+        _this._db.find( 'cardlocation', id )
             .then( resolve )
             .catch( reject );
     });
 };
 
-Queries.prototype.getCardsForBoard = function( board ) {
+Queries.prototype.getCardLocationsForBoard = function( board ) {
     var _this = this
-      , cardids = board.getCards();
+      , ids = board.getCardLocations();
 
     return new Promise(function( resolve, reject ) {
-        if (!cardids.length) {
+        if (!ids.length) {
             resolve([]);
         }
 
-        _this._db.findMany( 'card', cardids )
+        _this._db.findMany( 'cardlocation', ids )
             .then( resolve )
             .catch( reject );
     });
@@ -15664,7 +15854,7 @@ Queries.prototype.getAllWalls = function() {
 
 module.exports = Queries;
 
-},{"rsvp":72}],108:[function(require,module,exports){
+},{"rsvp":72}],109:[function(require,module,exports){
 function EventQueue( options ) {
     this.options = options || {};
 
@@ -15723,7 +15913,7 @@ EventQueue.prototype.trigger = function( ev, data ) {
 
 module.exports = EventQueue;
 
-},{}],109:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 var RSVP = require('rsvp')
   , Promise = RSVP.Promise;
 
@@ -15757,7 +15947,7 @@ Services.prototype.createBoard = function( data ) {
             return _this._queries.getPocketsForWall( wall );
         })
         .then(function( pockets ) {
-            _this._commands.addPocketsToBoard( board, pockets );  // --> card:created
+            _this._commands.addPocketsToBoard( board, pockets );  // --> cardlocation:created
 
             return board;
         });
@@ -15782,6 +15972,7 @@ Services.prototype.updateBoard = function( data ) {
 };
 
 // board:display
+// board:created
 Services.prototype.displayBoard = function( id ) {
     var _this = this;
 
@@ -15794,21 +15985,84 @@ Services.prototype.displayBoard = function( id ) {
         });
 };
 
-// card:move
-Services.prototype.moveCard = function( info ) {
-var _this = this;
+// board:select
+Services.prototype.selectBoard = function( wall ) {
+    var _this = this;
 
-return this._queries
-    .getCard( info.id )
-    .then(function( card ) {
-        if ( card.x != info.x || card.y != info.y ) {
-          card.x = info.x;
-          card.y = info.y;
+    return this._queries
+        .getBoardsForWall( wall )
+        .then(function( boards ) {
+            _this._interface.displayBoardSelector( boards );  // --> boardselector:displayed
 
-          return _this._commands.updateCard( card );  // --> card:updated
-        }
-    });
+            return boards;
+        });
 };
+
+
+
+
+
+// cardlocations
+
+// cardlocation:created
+Services.prototype.displayCardLocation = function( id ) {
+    var _this = this;
+
+    return this._queries
+        .getCardLocation( id )
+        .then(function( location ) {
+            return callDisplayCardLocationWithPocket.call( _this, location );
+        });
+};
+
+// board:displayed
+Services.prototype.displayCardLocations = function( board ) {
+    var _this = this;
+
+    return this._queries
+        .getCardLocationsForBoard( board )
+        .then(function( locations ) {
+            var promises = locations.map(function( location ) {
+                return callDisplayCardLocationWithPocket.call( _this, location );
+            });
+
+            return RSVP.all( promises );
+        });
+};
+
+function callDisplayCardLocationWithPocket( location ) {
+    var _this = this;
+
+    return this._queries.getPocket( location.getPocket() )
+        .then(function( pocket ) {
+            _this._interface.displayCardLocation( location, pocket );  // --> cardlocation:displayed
+
+            return location;
+        });
+}
+
+// cardlocation:move
+Services.prototype.moveCardLocation = function( info ) {
+    var _this = this;
+
+    return this._queries
+        .getCardLocation( info.id )
+        .then(function( cardlocation ) {
+            if ( cardlocation.x != info.x || cardlocation.y != info.y ) {
+              cardlocation.x = info.x;
+              cardlocation.y = info.y;
+
+              return _this._commands.updateCardLocation( cardlocation );  // --> cardlocation:updated
+            }
+        });
+};
+
+
+
+
+
+
+// pockets
 
 // pocket:new
 Services.prototype.newPocket = function() {
@@ -15830,7 +16084,7 @@ Services.prototype.createPocket = function( data ) {
             return _this._queries.getBoardsForWall( wall );
         })
         .then(function( boards ) {
-            _this._commands.addPocketToBoards( boards, pocket );  // --> card:created
+            _this._commands.addPocketToBoards( boards, pocket );  // --> cardlocation:created
 
             return pocket;
         });
@@ -15854,6 +16108,38 @@ Services.prototype.updatePocket = function( data ) {
     return this._commands.updatePocket( data );  // --> pocket:updated
 };
 
+
+
+
+
+
+// regions
+
+// region:created
+Services.prototype.displayRegion = function( id ) {
+    var _this = this;
+
+    return this._queries
+        .getRegion( id )
+        .then(function( region ) {
+            _this._interface.displayRegion( region );  // --> region:displayed
+
+            return region;
+        });
+};
+
+// board:displayed
+Services.prototype.displayRegions = function( board ) {
+    var _this = this;
+
+    return this._queries
+        .getRegionsForBoard( board )
+        .then(function( regions ) {
+            _this._interface.displayRegions( regions );  // --> region:displayed
+
+            return regions;
+        });
+};
 // region:new
 Services.prototype.newRegion = function() {
     return this._interface.displayRegionCreator();
@@ -15913,6 +16199,12 @@ Services.prototype.updateRegion = function( data ) {
   return this._commands.updateRegion( data );  // --> region:updated
 };
 
+
+
+
+
+// walls
+
 // wall:new
 Services.prototype.newWall = function() {
     this._interface.displayWallCreator();
@@ -15954,6 +16246,7 @@ Services.prototype.selectWall = function( id ) {
 };
 
 // wall:display
+// wall:created
 Services.prototype.displayWall = function( id ) {
     var _this = this, wall;
 
@@ -15961,7 +16254,7 @@ Services.prototype.displayWall = function( id ) {
         .then(function( resource ) {
             wall = resource;
 
-            _this._interface.displayWall( wall );  // --> wall:display
+            _this._interface.displayWall( wall );  // --> wall:displayed
 
             if ( !wall.boards.length ) {
                 _this._interface.notifyWallFirstTime( wall );  // --> wall:firsttime
@@ -15970,7 +16263,9 @@ Services.prototype.displayWall = function( id ) {
             return _this.selectBoard( wall );
         })
         .then(function( boards ) {
-            _this._interface.displayBoard( boards[0] );  // --> board:displayed
+            if (boards.length) {
+                _this._interface.displayBoard( boards[0] );  // --> board:displayed
+            }
 
             return wall;
         });
@@ -15992,58 +16287,9 @@ Services.prototype.unlinkTransform = function( id ) {
         });
 };
 
-// board:select
-Services.prototype.selectBoard = function( wall ) {
-    var _this = this;
-
-    return this._queries
-        .getBoardsForWall( wall )
-        .then(function( boards ) {
-            _this._interface.displayBoardSelector( boards );  // --> boardselector:displayed
-
-            return boards;
-        });
-};
-
-// card:created
-Services.prototype.displayCard = function( card ) {
-    return this._interface.displayCard( card );  // --> card:displayed
-};
-
-// board:displayed
-Services.prototype.displayCards = function( board ) {
-    var _this = this;
-
-    return this._queries
-        .getCardsForBoard( board )
-        .then(function( cards ) {
-            _this._interface.displayCards( cards );  // --> card:displayed
-
-            return cards;
-        });
-};
-
-// card:created
-Services.prototype.displayRegion = function( region ) {
-    return this._interface.displayRegion( region );  // --> region:displayed
-};
-
-// board:displayed
-Services.prototype.displayRegions = function( board ) {
-    var _this = this;
-
-    return this._queries
-        .getRegionsForBoard( board )
-        .then(function( regions ) {
-            _this._interface.displayRegions( regions );  // --> region:displayed
-
-            return regions;
-        });
-};
-
 module.exports = Services;
 
-},{"rsvp":72}],110:[function(require,module,exports){
+},{"rsvp":72}],111:[function(require,module,exports){
 // defaults
 
 var min_scale = 0.1;
@@ -16132,7 +16378,7 @@ function CanvasBoard( queue, board, options ) {
 
 module.exports = CanvasBoard;
 
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 // defaults
 
 var colors = {
@@ -16153,27 +16399,25 @@ var size = {    // issue is that the server needs to know this as well
 
 // constructor
 
-function CanvasCard( queue, card, pocket ) {
+function CanvasCard( queue, location, pocket ) {
     var shape = new Kinetic.Group({
-      id: card.id,
-      x: card.x || 5,
-      y: card.y || 5,
+      id: location.id,
+      x: location.x || 5,
+      y: location.y || 5,
       draggable: true
     });
 
     var cardback = __createCardback( size.width, size.height, (pocket.color || colors.fill), shadow.color );
     var cardnumber = __createIdText( pocket.cardnumber );
-    var cardtitle = __createTitleText( pocket.title );
-    var tag = __createTag();
+    var cardtitle = __createTitleText( pocket.getTitle() );
 
     shape.add( cardback );
     shape.add( cardnumber );
     shape.add( cardtitle );
-    shape.add( tag );
 
     queue
-      .on( 'card:updated', function( data ) {
-        if ( card.id === data.id &&
+      .on( 'cardlocation:updated', function( data ) {
+        if ( location.id === data.id &&
             ( shape.getX() != data.x || shape.getY() != data.y ) ) {
           __moveTo( data.x, data.y );
         }
@@ -16188,15 +16432,15 @@ function CanvasCard( queue, card, pocket ) {
       .on('mousedown touchstart', function() {
         __displayActiveState();
 
-        queue.trigger( 'card:activate', card );
+        queue.trigger( 'cardlocation:activate', location );
       })
       .on('mouseup touchend', function() {
         __displayInactiveState();
 
-        queue.trigger( 'card:deactivate', card );
+        queue.trigger( 'cardlocation:deactivate', location );
       })
       .on('dragend', function() {
-        queue.trigger( 'card:move', { id: card.getId(), x: shape.getX(), y: shape.getY() } );
+        queue.trigger( 'cardlocation:move', { id: location.getId(), x: shape.getX(), y: shape.getY() } );
       })
       .on('dblclick dbltap', function( e ) {
         e.cancelBubble = true;
@@ -16304,7 +16548,7 @@ function __createTitleText( title ) {
 
 module.exports = CanvasCard;
 
-},{}],112:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 // defaults
 
 var handleSize = 20;
@@ -16515,7 +16759,7 @@ function CanvasRegion( queue, region ) {
 
 module.exports = CanvasRegion;
 
-},{}],113:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 var CanvasBoard = require('./shapes/board')
   , CanvasCard = require('./shapes/card')
   , CanvasRegion = require('./shapes/region');
@@ -16588,16 +16832,6 @@ UI.prototype.displayBoard = function( board ) {
     this._canvasregions = [];
 };
 
-UI.prototype.addBoard = function( boards ) {
-    var options = boards.map(function( board ) {
-        return '<li><a href="#'+ board.getId() +'" data-display="board">'+ board.getName() +'</a></li>';
-    });
-
-    options.push('<li><button type="button" class="btn btn-default" data-toggle="modal" data-target="#newBoard" data-new="board" data-parent="'+ this._wall.getId() +'" title="Add Board"><i class="glyphicon glyphicon-plus"></i></button></li>');
-
-    this._$element.find('[data-selector="board"]').empty().append( options.join('') );
-};
-
 UI.prototype.displayBoardCreator = function( wall ) {
     this._boardcreator = this._boardcreator || this._$element.find('[data-create="board"]');
 
@@ -16619,6 +16853,18 @@ UI.prototype.displayBoardEditor = function( board ) {
     this._boardeditor.modal( 'show' );
 };
 
+UI.prototype.displayBoardSelector = function( wall, boards ) {
+    var selector = this._$element.find('[data-selector="board"]');
+
+    var options = boards.map(function( board ) {
+        return '<li><a href="#'+ board.getId() +'" data-display="board">'+ board.getName() +'</a></li>';
+    });
+
+    options.push('<li><button type="button" class="btn btn-default" data-new="board" data-parent="'+ wall.getId() +'" title="Add Board"><i class="glyphicon glyphicon-plus"></i></button></li>');
+
+    selector.empty().append( options.join('') );
+};
+
 UI.prototype.updateBoardSelector = function( board ) {
     var selector = this._$element.find('[data-selector="board"]');
 
@@ -16628,10 +16874,10 @@ UI.prototype.updateBoardSelector = function( board ) {
         .appendBefore( selector.children().last() );
 };
 
-// cards
+// cardlocations
 
-UI.prototype.displayCard = function( card, pocket ) {
-    var canvascard = new CanvasCard( this._queue, card, pocket );
+UI.prototype.displayCardLocation = function( cardlocation, pocket ) {
+    var canvascard = new CanvasCard( this._queue, cardlocation, pocket );
 
     this._canvasboard.addCard( canvascard );
 };
@@ -16719,11 +16965,15 @@ UI.prototype.displayWallEditor = function( wall ) {
 };
 
 UI.prototype.displayWallSelector = function( walls ) {
+    this._wallselector = this._wallselector || this._$element.find('[data-selector="wall"]');
+
     var options = walls.map(function( wall ) {
         return '<a href="#'+ wall.getId() +'" class="list-group-item" data-display="wall" data-dismiss="modal">'+ wall.getName() +'</a>';
     });
 
-    this._$element.find('[data-selector="wall"]').empty().append( options.join('') );
+    this._wallselector.find('[data-options="list"]').empty().append( options.join('') );
+
+    this._wallselector.modal( 'show' );
 };
 
 // controls
@@ -16734,4 +16984,4 @@ UI.prototype.enableControls = function() {
 
 module.exports = UI;
 
-},{"./shapes/board":110,"./shapes/card":111,"./shapes/region":112}]},{},[101]);
+},{"./shapes/board":111,"./shapes/card":112,"./shapes/region":113}]},{},[102]);
