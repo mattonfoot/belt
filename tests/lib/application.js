@@ -10,7 +10,8 @@ var Belt = require('../../lib/adapter')
 //  system
   , Commands = require('../lib/commands')
   , Queries = require('../lib/queries')
-  , Services = require('../lib/services');
+  , Services = require('../lib/services')
+  , MovementTracker = require('../lib/trackMovement');
 
 function Application( queue, ui, options ) {
     this.options = options || {};
@@ -21,7 +22,10 @@ function Application( queue, ui, options ) {
     var belt = this.belt = new Belt( 'vuu_se', this.options );
 
     // initialize the services
-    var services = this.services = new Services( ui, new Commands( belt ), new Queries( belt ) );
+    var commands = new Commands( belt );
+    var queries = new Queries( belt );
+    var services = this.services = new Services( ui, commands, queries );
+    var tracker = this.tracker = new MovementTracker( queue, commands, queries );
 
     this._listen = true;
 
@@ -119,7 +123,31 @@ function Application( queue, ui, options ) {
         .on('cardlocation:created', function( cardlocation ) {
             if (!_this._listen) return;
 
-            services.displayCardLocation( cardlocation.getId() );
+            services.displayCardLocation( cardlocation );
+        })
+
+        .on( 'cardlocation:moved', function( location ) {
+            if (!_this._listen) return;
+
+            tracker.trackCardMovement( cardlocation );
+        })
+
+        .on( 'cardlocation:updated', function( location ) {
+            if (!_this._listen) return;
+
+            tracker.trackCardMovement( cardlocation );
+        })
+
+        .on( 'region:moved', function( region ) {
+            if (!_this._listen) return;
+
+            tracker.trackRegionMovement( region );
+        })
+
+        .on( 'region:updated', function( region ) {
+            if (!_this._listen) return;
+
+            tracker.trackRegionMovement( region );
         })
 
         ;
