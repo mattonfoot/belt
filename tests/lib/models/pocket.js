@@ -62,7 +62,7 @@ Pocket.prototype.getRegions = function() {
 };
 
 Pocket.prototype.addRegion = function( region ) {
-    if ( ~this.regions.indexOf( region.id ) ) {
+    if ( !~this.regions.indexOf( region.id ) ) {
         this.regions.push( region.id );
     }
 

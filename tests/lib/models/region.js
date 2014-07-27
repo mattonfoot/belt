@@ -57,7 +57,7 @@ Region.prototype.getPockets = function() {
 };
 
 Region.prototype.addPocket = function( pocket ) {
-    if ( ~this.pockets.indexOf( pocket.id ) ) {
+    if ( !~this.pockets.indexOf( pocket.id ) ) {
         this.pockets.push( pocket.id );
     }
 

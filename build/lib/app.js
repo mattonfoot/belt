@@ -14858,22 +14858,10 @@ function Application( queue, ui, options ) {
             services.displayCardLocation( cardlocation );
         })
 
-        .on( 'cardlocation:moved', function( location ) {
-            if (!_this._listen) return;
-
-            tracker.trackCardMovement( cardlocation );
-        })
-
         .on( 'cardlocation:updated', function( location ) {
             if (!_this._listen) return;
 
-            tracker.trackCardMovement( cardlocation );
-        })
-
-        .on( 'region:moved', function( region ) {
-            if (!_this._listen) return;
-
-            tracker.trackRegionMovement( region );
+            tracker.trackCardMovement( location );
         })
 
         .on( 'region:updated', function( region ) {
@@ -15418,7 +15406,7 @@ Pocket.prototype.getRegions = function() {
 };
 
 Pocket.prototype.addRegion = function( region ) {
-    if ( ~this.regions.indexOf( region.id ) ) {
+    if ( !~this.regions.indexOf( region.id ) ) {
         this.regions.push( region.id );
     }
 
@@ -15550,7 +15538,7 @@ Region.prototype.getPockets = function() {
 };
 
 Region.prototype.addPocket = function( pocket ) {
-    if ( ~this.pockets.indexOf( pocket.id ) ) {
+    if ( !~this.pockets.indexOf( pocket.id ) ) {
         this.pockets.push( pocket.id );
     }
 
@@ -15676,7 +15664,7 @@ Wall.prototype.getBoards = function() {
 };
 
 Wall.prototype.addBoard = function( board ) {
-    if ( ~this.boards.indexOf( board.id ) ) {
+    if ( !~this.boards.indexOf( board.id ) ) {
         this.boards.push( board.id );
     }
 
@@ -15688,7 +15676,7 @@ Wall.prototype.getPockets = function() {
 };
 
 Wall.prototype.addPocket = function( pocket ) {
-    if ( ~this.pockets.indexOf( pocket.id ) ) {
+    if ( !~this.pockets.indexOf( pocket.id ) ) {
         this.pockets.push( pocket.id );
     }
 
@@ -16806,12 +16794,12 @@ MovementTracker.prototype.trackCardMovement = function( card ) {
     this._queries
         .getBoard( card.getBoard() )
         .then(function( board ) {
-            return _this.queries.getRegionsForBoard( board );
+            return _this._queries.getRegionsForBoard( board );
         })
         .then(function( regions ) {
             regions.forEach(function( region ) {
                 if ( !cardIsInRegion.call( _this, card, region ) ) {
-                    markPocketAsNotInRegion.call( _this, card.links.pocket, region );
+                    markPocketAsNotInRegion.call( _this, card.getPocket(), region );
                 }
             });
 
@@ -16820,7 +16808,7 @@ MovementTracker.prototype.trackCardMovement = function( card ) {
         .then(function( regions ) {
             regions.forEach(function( region ) {
                 if ( cardIsInRegion.call( _this, card, region ) ) {
-                    markPocketAsInRegion.call( this, card.links.pocket, region );
+                    markPocketAsInRegion.call( _this, card.getPocket(), region );
                 }
             });
         });
@@ -16830,14 +16818,14 @@ MovementTracker.prototype.trackRegionMovement = function( region ) {
     var _this = this;
 
     this._queries
-        .getBoard( card.getBoard() )
+        .getBoard( region.getBoard() )
         .then(function( board ) {
-            return _this.queries.getCardsForBoard( board );
+            return _this._queries.getCardLocationsForBoard( board );
         })
         .then(function( cards ) {
             cards.forEach(function( card ) {
                 if ( !cardIsInRegion.call( _this, card, region ) ) {
-                    markPocketAsNotInRegion.call( _this, card.links.pocket, region );
+                    markPocketAsNotInRegion.call( _this, card.getPocket(), region );
                 }
             });
 
@@ -16846,7 +16834,7 @@ MovementTracker.prototype.trackRegionMovement = function( region ) {
         .then(function( cards ) {
             cards.forEach(function( card ) {
                 if ( cardIsInRegion.call( _this, card, region ) ) {
-                    markPocketAsInRegion.call( _this, card.links.pocket, region );
+                    markPocketAsInRegion.call( _this, card.getPocket(), region );
                 }
             });
         });
@@ -16869,11 +16857,11 @@ function markPocketAsInRegion( pocketid, region ) {
     return this._queries
         .getPocket( pocketid )
         .then(function( pocket ) {
-            var regions = pocket.getRegions();
+            var numregions = pocket.getRegions().length;
 
-            pocket.addRegion( region.getId() );
+            pocket.addRegion( region );
 
-            if (pocket.getRegions().length > regions.length) {
+            if (pocket.getRegions().length > numregions) {
                 return _this._commands
                     .updatePocket( pocket )
                     .then(function() {
@@ -16890,11 +16878,11 @@ function markPocketAsNotInRegion( pocketid, region ) {
     return this._queries
         .getPocket( pocketid )
         .then(function( pocket ) {
-            var regions = pocket.getRegions();
+            var numregions = pocket.getRegions().length;
 
-            pocket.removeRegion( region.getId() );
+            pocket.removeRegion( region );
 
-            if (pocket.getRegions().length < regions.length) {
+            if (pocket.getRegions().length < numregions) {
                 return _this._commands
                     .updatePocket( pocket )
                     .then(function() {

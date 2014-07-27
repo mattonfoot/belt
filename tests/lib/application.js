@@ -5,6 +5,7 @@ var Belt = require('../../lib/adapter')
   , CardLocation = require('../lib/models/cardlocation')
   , Pocket = require('../lib/models/pocket')
   , Region = require('../lib/models/region')
+  , Transform = require('../lib/models/transform')
   , Wall = require('../lib/models/wall')
 
 //  system
@@ -34,6 +35,7 @@ function Application( queue, ui, options ) {
       , "CardLocation": CardLocation
       , "Pocket": Pocket
       , "Region": Region
+      , "Transform": Transform
       , "Wall": Wall
     };
 
@@ -126,22 +128,10 @@ function Application( queue, ui, options ) {
             services.displayCardLocation( cardlocation );
         })
 
-        .on( 'cardlocation:moved', function( location ) {
-            if (!_this._listen) return;
-
-            tracker.trackCardMovement( cardlocation );
-        })
-
         .on( 'cardlocation:updated', function( location ) {
             if (!_this._listen) return;
 
-            tracker.trackCardMovement( cardlocation );
-        })
-
-        .on( 'region:moved', function( region ) {
-            if (!_this._listen) return;
-
-            tracker.trackRegionMovement( region );
+            tracker.trackCardMovement( location );
         })
 
         .on( 'region:updated', function( region ) {

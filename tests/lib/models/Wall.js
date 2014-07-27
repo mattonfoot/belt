@@ -28,7 +28,7 @@ Wall.prototype.getBoards = function() {
 };
 
 Wall.prototype.addBoard = function( board ) {
-    if ( ~this.boards.indexOf( board.id ) ) {
+    if ( !~this.boards.indexOf( board.id ) ) {
         this.boards.push( board.id );
     }
 
@@ -40,7 +40,7 @@ Wall.prototype.getPockets = function() {
 };
 
 Wall.prototype.addPocket = function( pocket ) {
-    if ( ~this.pockets.indexOf( pocket.id ) ) {
+    if ( !~this.pockets.indexOf( pocket.id ) ) {
         this.pockets.push( pocket.id );
     }
 
