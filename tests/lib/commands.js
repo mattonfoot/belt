@@ -13,7 +13,14 @@ var commands = [ 'create', 'update' ];
 commands.forEach(function( command ) {
     models.forEach(function( model ) {
         Commands.prototype[ command + model ] = function( data ) {
-            return this._db[command]( model.toLowerCase(), data); // --> model:commanded ( board:created, pocket:updated )
+            var _this = this;
+            return new Promise(function(resolve, reject) {
+                if (!_this._db[command]) reject( new Error( '[' + command +'] is not a valid command for ['+ model +']' ) );
+
+                _this._db[command]( model.toLowerCase(), data) // --> model:commanded ( board:created, pocket:updated )
+                    .then( resolve, reject )
+                    .catch( reject );
+            });
         };
     });
 });

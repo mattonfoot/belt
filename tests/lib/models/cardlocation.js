@@ -18,6 +18,14 @@ CardLocation.prototype.getId = function() {
     return this.id;
 };
 
+CardLocation.prototype.getX = function() {
+    return this.x;
+};
+
+CardLocation.prototype.getY = function() {
+    return this.y;
+};
+
 CardLocation.prototype.getPocket = function() {
     return this.pocket;
 };

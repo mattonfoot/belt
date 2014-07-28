@@ -40,6 +40,7 @@ var features = [
   , 'board.display'
   , 'board.edit'
   , 'board.update'
+  , 'card.move'
 ];
 
 describe('Features', function() {
