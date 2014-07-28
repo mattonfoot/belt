@@ -4,7 +4,9 @@ function Pocket( data ) {
     for ( var prop in data ) {
         if ( prop === 'links' ) continue;
 
-        this[prop] = data[prop];
+        var value = data[prop];
+
+        this[prop] = (value === 'undefined' ? undefined : value);
     }
 
     this.cardlocations = [];

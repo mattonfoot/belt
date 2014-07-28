@@ -14737,13 +14737,15 @@ var Belt = require('../../lib/adapter')
   , CardLocation = require('../lib/models/cardlocation')
   , Pocket = require('../lib/models/pocket')
   , Region = require('../lib/models/region')
+  , Transform = require('../lib/models/transform')
   , Wall = require('../lib/models/wall')
 
 //  system
   , Commands = require('../lib/commands')
   , Queries = require('../lib/queries')
   , Services = require('../lib/services')
-  , MovementTracker = require('../lib/trackMovement');
+  , MovementTracker = require('../lib/trackMovement')
+  , TransformManager = require('../lib/transformManager');
 
 function Application( queue, ui, options ) {
     this.options = options || {};
@@ -14757,7 +14759,8 @@ function Application( queue, ui, options ) {
     var commands = new Commands( belt );
     var queries = new Queries( belt );
     var services = this.services = new Services( ui, commands, queries );
-    var tracker = this.tracker = new MovementTracker( queue, commands, queries );
+    var movementTracker = this.movementTracker = new MovementTracker( queue, commands, queries );
+    var transformManager = this.transformManager = new TransformManager( queue, commands, queries );
 
     this._listen = true;
 
@@ -14766,6 +14769,7 @@ function Application( queue, ui, options ) {
       , "CardLocation": CardLocation
       , "Pocket": Pocket
       , "Region": Region
+      , "Transform": Transform
       , "Wall": Wall
     };
 
@@ -14861,13 +14865,19 @@ function Application( queue, ui, options ) {
         .on( 'cardlocation:updated', function( location ) {
             if (!_this._listen) return;
 
-            tracker.trackCardMovement( location );
+            movementTracker.trackCardMovement( location );
         })
 
         .on( 'region:updated', function( region ) {
             if (!_this._listen) return;
 
-            tracker.trackRegionMovement( region );
+            movementTracker.trackRegionMovement( region );
+        })
+
+        .on( 'pocket:regionenter', function( data ) {
+            if (!_this._listen) return;
+
+            transformManager.checkTransforms( data );
         })
 
         ;
@@ -14884,7 +14894,7 @@ Application.prototype.startListening = function() {
 module.exports = Application;
 
 }).call(this,require("JkpR2F"))
-},{"../../lib/adapter":1,"../lib/commands":100,"../lib/models/board":103,"../lib/models/cardlocation":104,"../lib/models/pocket":105,"../lib/models/region":106,"../lib/models/wall":107,"../lib/queries":108,"../lib/services":110,"../lib/trackMovement":114,"JkpR2F":10,"memdown":13}],100:[function(require,module,exports){
+},{"../../lib/adapter":1,"../lib/commands":100,"../lib/models/board":103,"../lib/models/cardlocation":104,"../lib/models/pocket":105,"../lib/models/region":106,"../lib/models/transform":107,"../lib/models/wall":108,"../lib/queries":109,"../lib/services":111,"../lib/trackMovement":115,"../lib/transformManager":116,"JkpR2F":10,"memdown":13}],100:[function(require,module,exports){
 var RSVP = require('rsvp')
   , Promise = RSVP.Promise;
 
@@ -15098,7 +15108,7 @@ var application = new Application( queue, interface, {} );
 
 module.exports = queue;
 
-},{"./application":99,"./interface":101,"./queue":109,"./ui":115}],103:[function(require,module,exports){
+},{"./application":99,"./interface":101,"./queue":110,"./ui":117}],103:[function(require,module,exports){
 
 
 function Board( data ) {
@@ -15348,7 +15358,9 @@ function Pocket( data ) {
     for ( var prop in data ) {
         if ( prop === 'links' ) continue;
 
-        this[prop] = data[prop];
+        var value = data[prop];
+
+        this[prop] = (value === 'undefined' ? undefined : value);
     }
 
     this.cardlocations = [];
@@ -15634,6 +15646,97 @@ Region.onBeforeCreate = function( data ) {
 module.exports = Region;
 
 },{}],107:[function(require,module,exports){
+
+function Transform( data ) {
+    for ( var prop in data ) {
+        if ( prop === 'links' ) continue;
+
+        this[prop] = data[prop];
+    }
+
+    for ( var link in data.links ) {
+        this[link] = data.links[link];
+    }
+
+    this.constructor = Transform;
+}
+
+Transform.prototype.getPhrase = function() {
+    return this.phrase;
+};
+
+Transform.prototype.getRules = function() {
+    return this.rules;
+};
+
+Transform.prototype.getBoard = function() {
+    return this.board;
+};
+
+Transform.constructor = function( data ) {
+    if ( data instanceof Transform ) {
+        return data;
+    }
+
+    return new Transform( data );
+};
+
+Transform.schema = {
+    phrase: String
+  , rules: Object
+  , board: 'board'
+  , createdBy: 'user'
+  , createdOn: Date
+  , lastModifiedBy: 'user'
+  , lastModifiedOn: Date
+};
+
+Transform.validator = function( data ) {
+    var validator = {
+        validForUpdate: true
+      , validForCreate: true
+      , issues: []
+    };
+
+    if ( !data.id ) {
+        validator.validForUpdate = false;
+        validator.issues.push( 'ID is required' );
+    }
+
+    if ( !data.phrase || data.phrase === '' ) {
+        validator.validForUpdate = validator.validForCreate = false;
+        validator.issues.push( 'Phrase is required' );
+    }
+
+    if ( !data.board ) {
+        validator.validForUpdate = false;
+        validator.issues.push( 'Board is required' );
+    }
+
+    return validator;
+};
+
+Transform.onBeforeUpdate = function ( data ) {
+    // data.lastModifiedBy = app.getCurrentUser()._id;
+    data.lastModifiedOn = new Date();
+
+    data.rules = queryPhraseParser( phrase );
+
+    return data;
+};
+
+Transform.onBeforeCreate = function( data ) {
+    // data.createdBy = app.getCurrentUser()._id;
+    data.createdOn = new Date();
+
+    data.rules = queryPhraseParser( phrase );
+
+    return data;
+};
+
+module.exports = Transform;
+
+},{}],108:[function(require,module,exports){
 function Wall( data ) {
     for ( var prop in data ) {
         if ( prop === 'links' ) continue;
@@ -15738,7 +15841,7 @@ Wall.onBeforeCreate = function( data ) {
 
 module.exports = Wall;
 
-},{}],108:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 var RSVP = require('rsvp')
   , Promise = RSVP.Promise;
 
@@ -15848,6 +15951,16 @@ Queries.prototype.getRegionsForBoard = function( board ) {
     });
 };
 
+Queries.prototype.getAllTransforms = function() {
+    var _this = this;
+
+    return new Promise(function( resolve, reject ) {
+        _this._db.findMany( 'transforms' )
+            .then( resolve )
+            .catch( reject );
+    });
+};
+
 Queries.prototype.getWall = function( wallid ) {
     var _this = this;
 
@@ -15870,7 +15983,7 @@ Queries.prototype.getAllWalls = function() {
 
 module.exports = Queries;
 
-},{"rsvp":72}],109:[function(require,module,exports){
+},{"rsvp":72}],110:[function(require,module,exports){
 function EventQueue( options ) {
     this.options = options || {};
 
@@ -15929,7 +16042,7 @@ EventQueue.prototype.trigger = function( ev, data ) {
 
 module.exports = EventQueue;
 
-},{}],110:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 var RSVP = require('rsvp')
   , Promise = RSVP.Promise;
 
@@ -16305,7 +16418,7 @@ Services.prototype.unlinkTransform = function( id ) {
 
 module.exports = Services;
 
-},{"rsvp":72}],111:[function(require,module,exports){
+},{"rsvp":72}],112:[function(require,module,exports){
 // defaults
 
 var min_scale = 0.1;
@@ -16394,7 +16507,7 @@ function CanvasBoard( queue, board, options ) {
 
 module.exports = CanvasBoard;
 
-},{}],112:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 // defaults
 
 var colors = {
@@ -16564,7 +16677,7 @@ function __createTitleText( title ) {
 
 module.exports = CanvasCard;
 
-},{}],113:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 // defaults
 
 var handleSize = 20;
@@ -16775,7 +16888,7 @@ function CanvasRegion( queue, region ) {
 
 module.exports = CanvasRegion;
 
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 
 var cardHeight = 65;
 var cardWidth = 100;
@@ -16894,7 +17007,64 @@ function markPocketAsNotInRegion( pocketid, region ) {
 
 module.exports = MovementTracker;
 
-},{}],115:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
+
+function TransformManager( queue, commands, queries ) {
+    this._queue = queue;
+    this._commands = commands;
+    this._queries = queries;
+
+    this._regionalcards = {};
+}
+
+TransformManager.prototype.checkTransforms = function( data ) {
+    var pocket = data.pocket
+      , region = data.region;
+
+    return this._queries.getAllTranforms()
+        .then(function( resources ) {
+            resources.forEach(function( transform ) {
+                processTransform.call( this, transform, pocket, region );
+            });
+        });
+};
+
+function processTransform( transform, pocket, region ) {
+    var rules = transform.rules
+      , attr = rules.attr
+      , when = rules.when
+      , from = rules.from
+      , canApply = checkCanApplyTransform( region, when, from.selector );
+
+    if ( canApply ) {
+        pocket[attr] = region[from.attr];
+
+        this._commands.updatePocket( pocket );
+    }
+}
+
+function checkCanApplyTransform( region, when, filter ) {
+    if ( when.relationship === 'within' && when.filter === 'region' && filter.node === 'region' ) {
+        return filterMethods[typeof filter.selector]( region, filter );
+    }
+
+    return false;
+}
+
+var filterMethods = {
+    'string': function( region, filter ) {
+        return region.getId() === filter.selector.replace('#', '');
+    }
+  , 'object': function( region, filter ) {
+        var f = filter.selector;
+
+        return region[f.node] === f.selector.replace('#', '');
+    }
+};
+
+module.exports = TransformManager;
+
+},{}],117:[function(require,module,exports){
 var CanvasBoard = require('./shapes/board')
   , CanvasCard = require('./shapes/card')
   , CanvasRegion = require('./shapes/region');
@@ -17119,4 +17289,4 @@ UI.prototype.enableControls = function() {
 
 module.exports = UI;
 
-},{"./shapes/board":111,"./shapes/card":112,"./shapes/region":113}]},{},[102]);
+},{"./shapes/board":112,"./shapes/card":113,"./shapes/region":114}]},{},[102]);

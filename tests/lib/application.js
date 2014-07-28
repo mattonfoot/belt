@@ -12,7 +12,8 @@ var Belt = require('../../lib/adapter')
   , Commands = require('../lib/commands')
   , Queries = require('../lib/queries')
   , Services = require('../lib/services')
-  , MovementTracker = require('../lib/trackMovement');
+  , MovementTracker = require('../lib/trackMovement')
+  , TransformManager = require('../lib/transformManager');
 
 function Application( queue, ui, options ) {
     this.options = options || {};
@@ -26,7 +27,8 @@ function Application( queue, ui, options ) {
     var commands = new Commands( belt );
     var queries = new Queries( belt );
     var services = this.services = new Services( ui, commands, queries );
-    var tracker = this.tracker = new MovementTracker( queue, commands, queries );
+    var movementTracker = this.movementTracker = new MovementTracker( queue, commands, queries );
+    var transformManager = this.transformManager = new TransformManager( queue, commands, queries );
 
     this._listen = true;
 
@@ -131,13 +133,19 @@ function Application( queue, ui, options ) {
         .on( 'cardlocation:updated', function( location ) {
             if (!_this._listen) return;
 
-            tracker.trackCardMovement( location );
+            movementTracker.trackCardMovement( location );
         })
 
         .on( 'region:updated', function( region ) {
             if (!_this._listen) return;
 
-            tracker.trackRegionMovement( region );
+            movementTracker.trackRegionMovement( region );
+        })
+
+        .on( 'pocket:regionenter', function( data ) {
+            if (!_this._listen) return;
+
+            transformManager.checkTransforms( data );
         })
 
         ;
