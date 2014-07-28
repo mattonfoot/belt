@@ -33,7 +33,9 @@ EventQueue.prototype.emit = function( ev, data ) {
                 console.log( 'this.events['+ ev + '].call()' );
             }
 
-            react.reaction( data );
+            // setTimeout(function() {
+                react.reaction( data );
+            // }, 0);
 
             if (!react.once) {
                 cleansed.push( react );

@@ -45,6 +45,11 @@ function CanvasCard( queue, location, pocket ) {
         if ( pocket.id === data.id ) {
             __UpdateDisplay( data );
         }
+      })
+      .on( 'pocket:transformed', function( data ) {
+        if ( pocket.id === data.id ) {
+            __UpdateDisplay( data );
+        }
       });
 
     shape

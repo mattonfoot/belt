@@ -11,7 +11,7 @@ TransformManager.prototype.checkTransforms = function( data ) {
     var pocket = data.pocket
       , region = data.region;
 
-    return this._queries.getAllTranforms()
+    return this._queries.getAllTransforms()
         .then(function( resources ) {
             resources.forEach(function( transform ) {
                 processTransform.call( this, transform, pocket, region );
@@ -29,7 +29,9 @@ function processTransform( transform, pocket, region ) {
     if ( canApply ) {
         pocket[attr] = region[from.attr];
 
-        this._commands.updatePocket( pocket );
+        this._queue.emit( 'pocket:transformed', pocket );
+
+        // this._commands.updatePocket( pocket );
     }
 }
 

@@ -71,6 +71,16 @@ Pocket.prototype.addRegion = function( region ) {
     return this;
 };
 
+Pocket.prototype.removeRegion = function( region ) {
+    var loc = this.regions.indexOf( region.id );
+
+    if ( ~loc ) {
+        this.regions.splice( loc, 1 );
+    }
+
+    return this;
+};
+
 Pocket.constructor = function( data ) {
     if ( data instanceof Pocket ) {
         return data;

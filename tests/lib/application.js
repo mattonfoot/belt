@@ -148,6 +148,12 @@ function Application( queue, ui, options ) {
             transformManager.checkTransforms( data );
         })
 
+        .on( 'pocket:regionexit', function( data ) {
+            if (!_this._listen) return;
+
+            transformManager.checkTransforms( data );
+        })
+
         ;
 }
 

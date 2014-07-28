@@ -117,58 +117,72 @@ Adapter.prototype.create = function( schema, data ) {
     var _this = this
       , validator = _this._validators[schema]( data );
 
-    if ( !validator.validForCreate ) {
-        _this.emit( schema + ':createfail', {
-            id: data.id,
-            err: new Error( validator.issues.join(', ') )
-        });
+    return new Promise(function( resolve, reject ) {
+        if ( !validator.validForCreate ) {
+            var error = new Error( 'Schema validation failed: ' + validator.issues.join(', ') );
 
-        return;
-    }
+            _this.emit( schema + ':createfail', {
+                id: data.id,
+                err: error
+            });
 
-    return this._repository
-        .create( schema, _onBeforeTransforms( _this._beforeCreate[schema], data ) )
-        .then( _this._factories[schema] )
-        .then(function( doc ) {
-              _this.emit( schema + ':created', doc );
+            throw error;
+        }
 
-              return doc;
-        })
-        .catch(function( err ) {
-              _this.emit( schema + ':createfail', {
-                  id: data._id,
-                  err: err
-              });
-        });
+        _this._repository
+            .create( schema, _onBeforeTransforms( _this._beforeCreate[schema], data ) )
+            .then( _this._factories[schema] )
+            .then(function( doc ) {
+                  _this.emit( schema + ':created', doc );
+
+                  resolve( doc );
+            })
+            .catch(function( err ) {
+                  _this.emit( schema + ':createfail', {
+                      id: data._id,
+                      err: err
+                  });
+
+                  reject( err );
+            });
+
+    });
 };
 
 Adapter.prototype.update = function( schema, data ) {
     var _this = this
       , validator = _this._validators[schema]( data );
 
-    if ( !validator.validForUpdate ) {
-        _this.emit( schema + ':updatefail', {
-            id: data.id,
-            err: new Error( validator.issues.join(', ') )
-        });
+    return new Promise(function( resolve, reject ) {
+        if ( !validator.validForUpdate ) {
+            var error = new Error( 'Schema validation failed: ' + validator.issues.join(', ') );
 
-        return;
-    }
+            _this.emit( schema + ':updatefail', {
+                id: data.id,
+                err: error
+            });
 
-    return this._repository
-        .update( schema, _onBeforeTransforms( _this._beforeUpdate[schema], data ) )
-        .then( _this._factories[schema] )
-        .then(function( doc ) {
-              _this.emit( schema + ':updated', doc );
+            throw error;
+        }
 
-              return doc;
-        })
-        .catch(function( err ) {
-              _this.emit( schema + ':updatefail', {
-                  id: data._id,
-                  err: err
-              });
-        });
+        _this._repository
+            .update( schema, _onBeforeTransforms( _this._beforeUpdate[schema], data ) )
+            .then( _this._factories[schema] )
+            .then(function( doc ) {
+                  _this.emit( schema + ':updated', doc );
+
+                  resolve( doc );
+            })
+            .catch(function( err ) {
+                  _this.emit( schema + ':updatefail', {
+                      id: data._id,
+                      err: err
+                  });
+
+                  reject( err );
+            });
+
+    });
 };
 
 Adapter.prototype.delete = function( schema, id ) {
@@ -14880,6 +14894,12 @@ function Application( queue, ui, options ) {
             transformManager.checkTransforms( data );
         })
 
+        .on( 'pocket:regionexit', function( data ) {
+            if (!_this._listen) return;
+
+            transformManager.checkTransforms( data );
+        })
+
         ;
 }
 
@@ -14910,7 +14930,14 @@ var commands = [ 'create', 'update' ];
 commands.forEach(function( command ) {
     models.forEach(function( model ) {
         Commands.prototype[ command + model ] = function( data ) {
-            return this._db[command]( model.toLowerCase(), data); // --> model:commanded ( board:created, pocket:updated )
+            var _this = this;
+            return new Promise(function(resolve, reject) {
+                if (!_this._db[command]) reject( new Error( '[' + command +'] is not a valid command for ['+ model +']' ) );
+
+                _this._db[command]( model.toLowerCase(), data) // --> model:commanded ( board:created, pocket:updated )
+                    .then( resolve, reject )
+                    .catch( reject );
+            });
         };
     });
 });
@@ -15262,6 +15289,14 @@ CardLocation.prototype.getId = function() {
     return this.id;
 };
 
+CardLocation.prototype.getX = function() {
+    return this.x;
+};
+
+CardLocation.prototype.getY = function() {
+    return this.y;
+};
+
 CardLocation.prototype.getPocket = function() {
     return this.pocket;
 };
@@ -15420,6 +15455,16 @@ Pocket.prototype.getRegions = function() {
 Pocket.prototype.addRegion = function( region ) {
     if ( !~this.regions.indexOf( region.id ) ) {
         this.regions.push( region.id );
+    }
+
+    return this;
+};
+
+Pocket.prototype.removeRegion = function( region ) {
+    var loc = this.regions.indexOf( region.id );
+
+    if ( ~loc ) {
+        this.regions.splice( loc, 1 );
     }
 
     return this;
@@ -16019,7 +16064,9 @@ EventQueue.prototype.emit = function( ev, data ) {
                 console.log( 'this.events['+ ev + '].call()' );
             }
 
-            react.reaction( data );
+            // setTimeout(function() {
+                react.reaction( data );
+            // }, 0);
 
             if (!react.once) {
                 cleansed.push( react );
@@ -16555,6 +16602,11 @@ function CanvasCard( queue, location, pocket ) {
         if ( pocket.id === data.id ) {
             __UpdateDisplay( data );
         }
+      })
+      .on( 'pocket:transformed', function( data ) {
+        if ( pocket.id === data.id ) {
+            __UpdateDisplay( data );
+        }
       });
 
     shape
@@ -16901,29 +16953,64 @@ function MovementTracker( queue, commands, queries ) {
     this._regionalcards = {};
 }
 
-MovementTracker.prototype.trackCardMovement = function( card ) {
-    var _this = this;
+MovementTracker.prototype.trackCardMovement = function( location ) {
+    var _this = this
+      , patch = {
+            in: []
+          , out: []
+        }
+      , card;
 
     this._queries
-        .getBoard( card.getBoard() )
+        .getPocket( location.getPocket() )
+        .then(function( resource ) {
+            card = resource;
+
+            return _this._queries.getBoard( location.getBoard() );
+        })
         .then(function( board ) {
             return _this._queries.getRegionsForBoard( board );
         })
         .then(function( regions ) {
+            var update = [];
+
             regions.forEach(function( region ) {
-                if ( !cardIsInRegion.call( _this, card, region ) ) {
-                    markPocketAsNotInRegion.call( _this, card.getPocket(), region );
+                var regionid = region.getId()
+                  , isInRegion = cardIsInRegion.call( _this, location, region )
+                  , areLinked = ~card.getRegions().indexOf( regionid );
+
+                if ( isInRegion ) {
+                    if (!areLinked) {
+                        patch.in.push( region ); // mark region going in
+                    }
+
+                    update.push( regionid );
+
+                    return;
+                }
+
+                if ( areLinked ) {
+                    patch.out.push( region ); // mark region comming out
                 }
             });
 
-            return regions;
-        })
-        .then(function( regions ) {
-            regions.forEach(function( region ) {
-                if ( cardIsInRegion.call( _this, card, region ) ) {
-                    markPocketAsInRegion.call( _this, card.getPocket(), region );
-                }
-            });
+            if ( !patch.in.length && !patch.out.length ) return card;
+
+            card.regions = update;
+
+            return _this._commands
+                .updatePocket( card )
+                .then(function( card ) {
+                    patch.out.forEach(function( region ) {
+                        _this._queue.emit( 'pocket:regionexit', { pocket: card, region: region } );
+                    });
+
+                    patch.in.forEach(function( region ) {
+                        _this._queue.emit( 'pocket:regionenter', { pocket: card, region: region } );
+                    });
+
+                    return card;
+                });
         });
 };
 
@@ -16963,6 +17050,7 @@ function cardIsInRegion( card, region ) {
 
     return ( inLeft && inRight && inTop && inBase );
 }
+
 
 function markPocketAsInRegion( pocketid, region ) {
     var _this = this;
@@ -17021,7 +17109,7 @@ TransformManager.prototype.checkTransforms = function( data ) {
     var pocket = data.pocket
       , region = data.region;
 
-    return this._queries.getAllTranforms()
+    return this._queries.getAllTransforms()
         .then(function( resources ) {
             resources.forEach(function( transform ) {
                 processTransform.call( this, transform, pocket, region );
@@ -17039,7 +17127,9 @@ function processTransform( transform, pocket, region ) {
     if ( canApply ) {
         pocket[attr] = region[from.attr];
 
-        this._commands.updatePocket( pocket );
+        this._queue.emit( 'pocket:transformed', pocket );
+
+        // this._commands.updatePocket( pocket );
     }
 }
 
