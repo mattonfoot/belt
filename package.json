@@ -36,21 +36,18 @@
     "grunt-cli": "*",
     "grunt-benchmark": "*",
     "grunt-blanket": "*",
-    "grunt-browserify": "*",
     "grunt-complexity": "*",
     "grunt-contrib-clean": "*",
     "grunt-contrib-copy": "*",
     "grunt-contrib-jshint": "*",
     "grunt-contrib-watch": "*",
     "grunt-coveralls": "*",
-    "grunt-mocha": "*",
     "grunt-mocha-test": "*",
     "load-grunt-tasks": "*",
     "memdown": "*",
     "mocha": "*",
     "mocha-lcov-reporter": "*",
-    "travis-cov": "*",
-    "literalify": "*"
+    "travis-cov": "*"
   },
   "engines": {
     "node": ">=0.10.0",
