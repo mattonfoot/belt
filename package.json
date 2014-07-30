@@ -4,9 +4,9 @@
   "description": "A linked data layer over PouchDB with built in schema validation.",
   "main": "./lib/index.js",
   "scripts": {
-    "test": "grunt test",
-    "coverage": "grunt coverage",
-    "travis-ci": "grunt --verbose ci"
+    "test": "./node_modules/grunt-cli/bin/grunt test",
+    "coverage": "./node_modules/grunt-cli/bin/grunt coverage",
+    "travis-ci": "./node_modules/grunt-cli/bin/grunt --verbose ci"
   },
   "repository": {
     "type": "git",
@@ -33,6 +33,7 @@
     "chai": "*",
     "glob": "*",
     "grunt": "*",
+    "grunt-cli": "*",
     "grunt-benchmark": "*",
     "grunt-blanket": "*",
     "grunt-browserify": "*",
