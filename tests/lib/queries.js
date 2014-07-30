@@ -107,6 +107,21 @@ Queries.prototype.getRegionsForBoard = function( board ) {
     });
 };
 
+Queries.prototype.getTransformsForBoard = function( board ) {
+    var _this = this
+      , transformids = board.getTransforms();
+
+    return new Promise(function( resolve, reject ) {
+        if (!transformids.length) {
+            resolve([]);
+        }
+
+        _this._db.findMany( 'transform', transformids )
+            .then( resolve )
+            .catch( reject );
+    });
+};
+
 Queries.prototype.getAllTransforms = function() {
     var _this = this;
 

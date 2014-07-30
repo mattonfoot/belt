@@ -16,13 +16,37 @@ Services.prototype.newBoard = function() {
 
 // board:create
 Services.prototype.createBoard = function( data ) {
-    var _this = this, board;
+    var _this = this, board, phrase;
+
+    if (data.transform) {
+        phrase = data.transform;
+
+        delete data.transform;
+    }
 
     return this._commands
         .createBoard( data )  // --> board:created
         .then(function( resource ) {
             board = resource;
 
+            return board;
+        })
+        .then(function( board ) {
+            if (phrase && phrase !== '') {
+                return _this.createTransform({
+                        board: board.getId(),
+                        phrase: phrase
+                    })
+                    .then(function( transform ) {
+                        board.transforms.push( transform.getId() );
+
+                        return board;
+                    });
+            }
+
+            return board;
+        })
+        .then(function( board ) {
             _this._interface.addBoard( board );
 
             return _this._queries.getWall( board.getWall() );
@@ -52,7 +76,31 @@ Services.prototype.editBoard = function( id ) {
 
 // board:update
 Services.prototype.updateBoard = function( data ) {
-    return this._commands.updateBoard( data );  // --> board:updated
+    var _this = this, phrase;
+
+    if (data.transform) {
+        phrase = data.transform;
+
+        delete data.transform;
+    }
+
+    return this._commands.updateBoard( data )  // --> board:updated
+        .then(function( board ) {
+            if (phrase && phrase !== '') {
+                return _this.createTransform({
+                        board: board.getId(),
+                        phrase: phrase
+                    })
+                    .then(function( transform ) {
+                        board.transforms.push( transform.getId() );
+
+                        return board;
+                    });
+            }
+
+            return board;
+        });
+
 };
 
 // board:display
@@ -278,9 +326,31 @@ Services.prototype.resizeRegion = function( info ) {
       });
 };
 
-// region:update
-Services.prototype.updateRegion = function( data ) {
-  return this._commands.updateRegion( data );  // --> region:updated
+
+
+
+
+
+// transforms
+
+Services.prototype.createTransform = function( data ) {
+    return this._commands.createTransform( data );  // --> region:created
+};
+
+// transform:unlink
+Services.prototype.unlinkTransform = function( id ) {
+    var _this = this;
+
+    return this._queries
+        .getTransform( id )
+        .then(function( transform ) {
+            return _this._commands.unlinkTransform( id );  // --> transform:unlinked
+        })
+        .then(function( transform ) {
+            _this._interface.removeTransform( transform );
+
+            return transform;
+        });
 };
 
 
@@ -352,22 +422,6 @@ Services.prototype.displayWall = function( id ) {
             }
 
             return wall;
-        });
-};
-
-// transform:unlink
-Services.prototype.unlinkTransform = function( id ) {
-    var _this = this;
-
-    return this._queries
-        .getTransform( id )
-        .then(function( transform ) {
-            return _this._commands.unlinkTransform( id );  // --> transform:unlinked
-        })
-        .then(function( transform ) {
-            _this._interface.removeTransform( transform );
-
-            return transform;
         });
 };
 

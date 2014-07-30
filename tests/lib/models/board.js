@@ -9,6 +9,7 @@ function Board( data ) {
 
     this.cardlocations = [];
     this.regions = [];
+    this.transforms = [];
 
     for ( var link in data.links ) {
         this[link] = data.links[link];

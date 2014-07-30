@@ -61,7 +61,7 @@ function CanvasRegion( queue, region ) {
         e.cancelBubble = true;
         shape.getStage().preventEvents = true;
 
-        queue.trigger( 'region:edit', region );
+        queue.trigger( 'region:edit', region.getId() );
       });
 
     handle

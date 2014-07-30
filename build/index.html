@@ -122,11 +122,6 @@
                             <label for="name" class="control-label">Name</label>
                             <input class="form-control" id="name" name="name" placeholder="Name" value="">
                         </div>
-
-                        <div class="form-group">
-                          <label for="transform" class="control-label">Transform</label>
-                          <input class="form-control" id="transform" name="transform" placeholder="Transform" value="">
-                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-success">Create</button>
@@ -150,6 +145,15 @@
                         <div class="form-group">
                             <label for="name" class="control-label">Name</label>
                             <input class="form-control" id="name" name="name" placeholder="Name" value="">
+                        </div>
+
+
+                        <h5>Current Trasnforms</h5>
+                        <div class="list-group" data-options="list"></div>
+
+                        <div class="form-group">
+                          <label for="transform" class="control-label">Add Transform</label>
+                          <input class="form-control" id="transform" name="transform" placeholder="Transform" value="">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -226,8 +230,6 @@
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
         </form><!-- /.modal -->
-
-
 
         <form class="modal fade" id="newCard" data-create="pocket" tabindex="-1" role="dialog" aria-labelledby="newCardLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">

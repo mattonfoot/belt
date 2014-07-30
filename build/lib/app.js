@@ -14914,7 +14914,7 @@ Application.prototype.startListening = function() {
 module.exports = Application;
 
 }).call(this,require("JkpR2F"))
-},{"../../lib/adapter":1,"../lib/commands":100,"../lib/models/board":103,"../lib/models/cardlocation":104,"../lib/models/pocket":105,"../lib/models/region":106,"../lib/models/transform":107,"../lib/models/wall":108,"../lib/queries":109,"../lib/services":111,"../lib/trackMovement":115,"../lib/transformManager":116,"JkpR2F":10,"memdown":13}],100:[function(require,module,exports){
+},{"../../lib/adapter":1,"../lib/commands":100,"../lib/models/board":103,"../lib/models/cardlocation":104,"../lib/models/pocket":105,"../lib/models/region":106,"../lib/models/transform":107,"../lib/models/wall":108,"../lib/queries":109,"../lib/services":112,"../lib/trackMovement":116,"../lib/transformManager":117,"JkpR2F":10,"memdown":13}],100:[function(require,module,exports){
 var RSVP = require('rsvp')
   , Promise = RSVP.Promise;
 
@@ -14924,7 +14924,7 @@ function Commands( adapter ) {
     this._db = adapter;
 }
 
-var models = [ 'Board', 'CardLocation', 'Pocket', 'Region', 'Wall' ];
+var models = [ 'Board', 'CardLocation', 'Pocket', 'Region', 'Transform', 'Wall' ];
 var commands = [ 'create', 'update' ];
 
 commands.forEach(function( command ) {
@@ -15135,7 +15135,7 @@ var application = new Application( queue, interface, {} );
 
 module.exports = queue;
 
-},{"./application":99,"./interface":101,"./queue":110,"./ui":117}],103:[function(require,module,exports){
+},{"./application":99,"./interface":101,"./queue":111,"./ui":118}],103:[function(require,module,exports){
 
 
 function Board( data ) {
@@ -15147,6 +15147,7 @@ function Board( data ) {
 
     this.cardlocations = [];
     this.regions = [];
+    this.transforms = [];
 
     for ( var link in data.links ) {
         this[link] = data.links[link];
@@ -15691,6 +15692,8 @@ Region.onBeforeCreate = function( data ) {
 module.exports = Region;
 
 },{}],107:[function(require,module,exports){
+var queryPhraseParser = require('../queryPhraseParser');
+
 
 function Transform( data ) {
     for ( var prop in data ) {
@@ -15705,6 +15708,10 @@ function Transform( data ) {
 
     this.constructor = Transform;
 }
+
+Transform.prototype.getId = function() {
+    return this.id;
+};
 
 Transform.prototype.getPhrase = function() {
     return this.phrase;
@@ -15765,7 +15772,7 @@ Transform.onBeforeUpdate = function ( data ) {
     // data.lastModifiedBy = app.getCurrentUser()._id;
     data.lastModifiedOn = new Date();
 
-    data.rules = queryPhraseParser( phrase );
+    data.rules = queryPhraseParser( data.phrase );
 
     return data;
 };
@@ -15774,14 +15781,14 @@ Transform.onBeforeCreate = function( data ) {
     // data.createdBy = app.getCurrentUser()._id;
     data.createdOn = new Date();
 
-    data.rules = queryPhraseParser( phrase );
+    data.rules = queryPhraseParser( data.phrase );
 
     return data;
 };
 
 module.exports = Transform;
 
-},{}],108:[function(require,module,exports){
+},{"../queryPhraseParser":110}],108:[function(require,module,exports){
 function Wall( data ) {
     for ( var prop in data ) {
         if ( prop === 'links' ) continue;
@@ -15996,6 +16003,21 @@ Queries.prototype.getRegionsForBoard = function( board ) {
     });
 };
 
+Queries.prototype.getTransformsForBoard = function( board ) {
+    var _this = this
+      , transformids = board.getTransforms();
+
+    return new Promise(function( resolve, reject ) {
+        if (!transformids.length) {
+            resolve([]);
+        }
+
+        _this._db.findMany( 'transform', transformids )
+            .then( resolve )
+            .catch( reject );
+    });
+};
+
 Queries.prototype.getAllTransforms = function() {
     var _this = this;
 
@@ -16029,6 +16051,83 @@ Queries.prototype.getAllWalls = function() {
 module.exports = Queries;
 
 },{"rsvp":72}],110:[function(require,module,exports){
+// query phrase config object
+
+function Config( attr ) {
+  this.attr = attr;
+}
+
+Config.prototype.from = function( attr, selector ) {
+  this.from = {
+    attr: attr,
+    selector: selector
+  };
+
+  return this;
+};
+
+Config.prototype.when = function( relationship, filter ) {
+  this.when = {
+    relationship: relationship,
+    filter: filter
+  };
+
+  return this;
+};
+
+// parser factory
+
+function get( attr ) {
+  var config = new Config( attr );
+
+  return config;
+}
+
+function region( relationship, selector ) {
+    return {
+      relationship: relationship,
+      selector: selector,
+      node: 'region'
+    };
+}
+
+function board( selector ) {
+    return {
+      selector: selector,
+      node: 'board'
+    };
+}
+
+function Parser( phrase ) {
+  var matches = phrase.match(/(get|from|when)/ig);
+  if (!matches || matches.length < 2) {
+    return {};
+  }
+
+  var out = phrase.replace(/\sof\s/ig, ' ').replace(/board\s#([^\s]*)/ig, 'this.board(\'#$1\')').trim();
+  out = out.replace(/(board[^\(])\s/ig, '\'$1\' ').trim();
+  out = out.replace(/\sboard(?:\s|$)/ig, ' \'board\' ').trim();
+  out = out.replace(/region\s([^\s]*)\s([^\s]*)/ig, 'this.region(\'$1\',$2)').trim();
+  out = out.replace(/\sregion(?:\s|$)/ig, ' \'region\' ').trim();
+  out = out.replace(/get\s([^\s]*)/ig, 'this.get(\'$1\')').trim();
+  out = out.replace(/\sfrom\s([^\s]*)\s([^\s]*)/ig, '.from(\'$1\',$2)').trim();
+  out = out.replace(/\swhen\s([^\s]*?)\s([^\s]*)/ig, '.when(\'$1\',$2)').trim();
+
+  if (out === phrase) {
+    return {};
+  }
+
+  /*jslint evil: true */
+  return (new Function( 'return ' + out )).call({
+      get: get,
+      region: region,
+      board: board
+  });
+}
+
+module.exports = Parser;
+
+},{}],111:[function(require,module,exports){
 function EventQueue( options ) {
     this.options = options || {};
 
@@ -16089,7 +16188,7 @@ EventQueue.prototype.trigger = function( ev, data ) {
 
 module.exports = EventQueue;
 
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 var RSVP = require('rsvp')
   , Promise = RSVP.Promise;
 
@@ -16108,13 +16207,37 @@ Services.prototype.newBoard = function() {
 
 // board:create
 Services.prototype.createBoard = function( data ) {
-    var _this = this, board;
+    var _this = this, board, phrase;
+
+    if (data.transform) {
+        phrase = data.transform;
+
+        delete data.transform;
+    }
 
     return this._commands
         .createBoard( data )  // --> board:created
         .then(function( resource ) {
             board = resource;
 
+            return board;
+        })
+        .then(function( board ) {
+            if (phrase && phrase !== '') {
+                return _this.createTransform({
+                        board: board.getId(),
+                        phrase: phrase
+                    })
+                    .then(function( transform ) {
+                        board.transforms.push( transform.getId() );
+
+                        return board;
+                    });
+            }
+
+            return board;
+        })
+        .then(function( board ) {
             _this._interface.addBoard( board );
 
             return _this._queries.getWall( board.getWall() );
@@ -16144,7 +16267,31 @@ Services.prototype.editBoard = function( id ) {
 
 // board:update
 Services.prototype.updateBoard = function( data ) {
-    return this._commands.updateBoard( data );  // --> board:updated
+    var _this = this, phrase;
+
+    if (data.transform) {
+        phrase = data.transform;
+
+        delete data.transform;
+    }
+
+    return this._commands.updateBoard( data )  // --> board:updated
+        .then(function( board ) {
+            if (phrase && phrase !== '') {
+                return _this.createTransform({
+                        board: board.getId(),
+                        phrase: phrase
+                    })
+                    .then(function( transform ) {
+                        board.transforms.push( transform.getId() );
+
+                        return board;
+                    });
+            }
+
+            return board;
+        });
+
 };
 
 // board:display
@@ -16370,9 +16517,31 @@ Services.prototype.resizeRegion = function( info ) {
       });
 };
 
-// region:update
-Services.prototype.updateRegion = function( data ) {
-  return this._commands.updateRegion( data );  // --> region:updated
+
+
+
+
+
+// transforms
+
+Services.prototype.createTransform = function( data ) {
+    return this._commands.createTransform( data );  // --> region:created
+};
+
+// transform:unlink
+Services.prototype.unlinkTransform = function( id ) {
+    var _this = this;
+
+    return this._queries
+        .getTransform( id )
+        .then(function( transform ) {
+            return _this._commands.unlinkTransform( id );  // --> transform:unlinked
+        })
+        .then(function( transform ) {
+            _this._interface.removeTransform( transform );
+
+            return transform;
+        });
 };
 
 
@@ -16447,25 +16616,9 @@ Services.prototype.displayWall = function( id ) {
         });
 };
 
-// transform:unlink
-Services.prototype.unlinkTransform = function( id ) {
-    var _this = this;
-
-    return this._queries
-        .getTransform( id )
-        .then(function( transform ) {
-            return _this._commands.unlinkTransform( id );  // --> transform:unlinked
-        })
-        .then(function( transform ) {
-            _this._interface.removeTransform( transform );
-
-            return transform;
-        });
-};
-
 module.exports = Services;
 
-},{"rsvp":72}],112:[function(require,module,exports){
+},{"rsvp":72}],113:[function(require,module,exports){
 // defaults
 
 var min_scale = 0.1;
@@ -16495,7 +16648,7 @@ function CanvasBoard( queue, board, options ) {
                 return ;
             }
 
-            queue.trigger( 'board:edit', board );
+            queue.trigger( 'board:edit', board.getId() );
         });
 
     var $container = $( '#' + options.container );
@@ -16554,7 +16707,7 @@ function CanvasBoard( queue, board, options ) {
 
 module.exports = CanvasBoard;
 
-},{}],113:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 // defaults
 
 var colors = {
@@ -16627,7 +16780,7 @@ function CanvasCard( queue, location, pocket ) {
         e.cancelBubble = true;
         shape.getStage().preventEvents = true;
 
-        queue.trigger( 'pocket:edit', pocket );
+        queue.trigger( 'pocket:edit', pocket.getId() );
       });
 
     // private methods
@@ -16729,7 +16882,7 @@ function __createTitleText( title ) {
 
 module.exports = CanvasCard;
 
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 // defaults
 
 var handleSize = 20;
@@ -16793,7 +16946,7 @@ function CanvasRegion( queue, region ) {
         e.cancelBubble = true;
         shape.getStage().preventEvents = true;
 
-        queue.trigger( 'region:edit', region );
+        queue.trigger( 'region:edit', region.getId() );
       });
 
     handle
@@ -16940,7 +17093,7 @@ function CanvasRegion( queue, region ) {
 
 module.exports = CanvasRegion;
 
-},{}],115:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 
 var cardHeight = 65;
 var cardWidth = 100;
@@ -17095,7 +17248,7 @@ function markPocketAsNotInRegion( pocketid, region ) {
 
 module.exports = MovementTracker;
 
-},{}],116:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 
 function TransformManager( queue, commands, queries ) {
     this._queue = queue;
@@ -17127,9 +17280,9 @@ function processTransform( transform, pocket, region ) {
     if ( canApply ) {
         pocket[attr] = region[from.attr];
 
-        this._queue.emit( 'pocket:transformed', pocket );
+        // this._queue.emit( 'pocket:transformed', pocket );
 
-        // this._commands.updatePocket( pocket );
+        this._commands.updatePocket( pocket );
     }
 }
 
@@ -17154,7 +17307,7 @@ var filterMethods = {
 
 module.exports = TransformManager;
 
-},{}],117:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 var CanvasBoard = require('./shapes/board')
   , CanvasCard = require('./shapes/card')
   , CanvasRegion = require('./shapes/region');
@@ -17237,7 +17390,7 @@ UI.prototype.displayBoardCreator = function( wall ) {
 };
 
 UI.prototype.displayBoardEditor = function( board ) {
-    this._boardeditor = this._boardeditor || this._$element.find('[data-create="board"]');
+    this._boardeditor = this._boardeditor || this._$element.find('[data-update="board"]');
 
     this._boardeditor[0].reset();
     this._boardeditor.find('[name="id"]').val( board.getId() );
@@ -17287,7 +17440,7 @@ UI.prototype.displayPocketCreator = function( wall ) {
 };
 
 UI.prototype.displayPocketEditor = function( pocket ) {
-    this._pocketeditor = this._pocketeditor || this._$element.find('[data-create="pocket"]');
+    this._pocketeditor = this._pocketeditor || this._$element.find('[data-update="pocket"]');
 
     this._pocketeditor[0].reset();
     this._pocketeditor.find('[name="id"]').val( pocket.getId() );
@@ -17318,7 +17471,7 @@ UI.prototype.displayRegionCreator = function( board ) {
 };
 
 UI.prototype.displayRegionEditor = function( region ) {
-    this._regioneditor = this._regioneditor || this._$element.find('[data-create="region"]');
+    this._regioneditor = this._regioneditor || this._$element.find('[data-update="region"]');
 
     this._regioneditor[0].reset();
     this._regioneditor.find('[name="id"]').val( region.getId() );
@@ -17350,7 +17503,7 @@ UI.prototype.displayWallCreator = function() {
 };
 
 UI.prototype.displayWallEditor = function( wall ) {
-    this._walleditor = this._walleditor || this._$element.find('[data-create="wall"]');
+    this._walleditor = this._walleditor || this._$element.find('[data-update="wall"]');
 
     this._walleditor[0].reset();
     this._walleditor.find('[name="id"]').val( wall.getId() );
@@ -17379,4 +17532,4 @@ UI.prototype.enableControls = function() {
 
 module.exports = UI;
 
-},{"./shapes/board":112,"./shapes/card":113,"./shapes/region":114}]},{},[102]);
+},{"./shapes/board":113,"./shapes/card":114,"./shapes/region":115}]},{},[102]);

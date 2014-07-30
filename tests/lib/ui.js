@@ -80,7 +80,7 @@ UI.prototype.displayBoardCreator = function( wall ) {
 };
 
 UI.prototype.displayBoardEditor = function( board ) {
-    this._boardeditor = this._boardeditor || this._$element.find('[data-create="board"]');
+    this._boardeditor = this._boardeditor || this._$element.find('[data-update="board"]');
 
     this._boardeditor[0].reset();
     this._boardeditor.find('[name="id"]').val( board.getId() );
@@ -130,7 +130,7 @@ UI.prototype.displayPocketCreator = function( wall ) {
 };
 
 UI.prototype.displayPocketEditor = function( pocket ) {
-    this._pocketeditor = this._pocketeditor || this._$element.find('[data-create="pocket"]');
+    this._pocketeditor = this._pocketeditor || this._$element.find('[data-update="pocket"]');
 
     this._pocketeditor[0].reset();
     this._pocketeditor.find('[name="id"]').val( pocket.getId() );
@@ -161,7 +161,7 @@ UI.prototype.displayRegionCreator = function( board ) {
 };
 
 UI.prototype.displayRegionEditor = function( region ) {
-    this._regioneditor = this._regioneditor || this._$element.find('[data-create="region"]');
+    this._regioneditor = this._regioneditor || this._$element.find('[data-update="region"]');
 
     this._regioneditor[0].reset();
     this._regioneditor.find('[name="id"]').val( region.getId() );
@@ -193,7 +193,7 @@ UI.prototype.displayWallCreator = function() {
 };
 
 UI.prototype.displayWallEditor = function( wall ) {
-    this._walleditor = this._walleditor || this._$element.find('[data-create="wall"]');
+    this._walleditor = this._walleditor || this._$element.find('[data-update="wall"]');
 
     this._walleditor[0].reset();
     this._walleditor.find('[name="id"]').val( wall.getId() );

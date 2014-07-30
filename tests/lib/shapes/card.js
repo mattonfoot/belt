@@ -70,7 +70,7 @@ function CanvasCard( queue, location, pocket ) {
         e.cancelBubble = true;
         shape.getStage().preventEvents = true;
 
-        queue.trigger( 'pocket:edit', pocket );
+        queue.trigger( 'pocket:edit', pocket.getId() );
       });
 
     // private methods

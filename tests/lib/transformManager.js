@@ -29,9 +29,9 @@ function processTransform( transform, pocket, region ) {
     if ( canApply ) {
         pocket[attr] = region[from.attr];
 
-        this._queue.emit( 'pocket:transformed', pocket );
+        // this._queue.emit( 'pocket:transformed', pocket );
 
-        // this._commands.updatePocket( pocket );
+        this._commands.updatePocket( pocket );
     }
 }
 

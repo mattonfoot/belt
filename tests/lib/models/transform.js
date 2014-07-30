@@ -1,3 +1,5 @@
+var queryPhraseParser = require('../queryPhraseParser');
+
 
 function Transform( data ) {
     for ( var prop in data ) {
@@ -12,6 +14,10 @@ function Transform( data ) {
 
     this.constructor = Transform;
 }
+
+Transform.prototype.getId = function() {
+    return this.id;
+};
 
 Transform.prototype.getPhrase = function() {
     return this.phrase;
@@ -72,7 +78,7 @@ Transform.onBeforeUpdate = function ( data ) {
     // data.lastModifiedBy = app.getCurrentUser()._id;
     data.lastModifiedOn = new Date();
 
-    data.rules = queryPhraseParser( phrase );
+    data.rules = queryPhraseParser( data.phrase );
 
     return data;
 };
@@ -81,7 +87,7 @@ Transform.onBeforeCreate = function( data ) {
     // data.createdBy = app.getCurrentUser()._id;
     data.createdOn = new Date();
 
-    data.rules = queryPhraseParser( phrase );
+    data.rules = queryPhraseParser( data.phrase );
 
     return data;
 };

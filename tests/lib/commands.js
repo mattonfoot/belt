@@ -7,7 +7,7 @@ function Commands( adapter ) {
     this._db = adapter;
 }
 
-var models = [ 'Board', 'CardLocation', 'Pocket', 'Region', 'Wall' ];
+var models = [ 'Board', 'CardLocation', 'Pocket', 'Region', 'Transform', 'Wall' ];
 var commands = [ 'create', 'update' ];
 
 commands.forEach(function( command ) {

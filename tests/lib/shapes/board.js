@@ -27,7 +27,7 @@ function CanvasBoard( queue, board, options ) {
                 return ;
             }
 
-            queue.trigger( 'board:edit', board );
+            queue.trigger( 'board:edit', board.getId() );
         });
 
     var $container = $( '#' + options.container );
