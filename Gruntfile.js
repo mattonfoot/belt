@@ -56,6 +56,6 @@ module.exports = function( grunt )
 
     // travis-ci
 
-    grunt.registerTask('ci'     , [ 'test', 'coverage', 'mochaTest:travis-cov', 'coveralls']);
+    grunt.registerTask('ci'     , [ 'test', 'coverage', 'coveralls', 'mochaTest:travis-cov']);
 
 };
