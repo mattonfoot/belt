@@ -3,6 +3,7 @@ var RSVP = require('rsvp');
 
 var Promise = RSVP.Promise;
 
+var PouchDB = require('pouchdb');
 var Belt = require('../lib/repository');
 
 var schemas = {
@@ -105,7 +106,7 @@ describe('using a repository', function () {
         opts.db = require('memdown');
     }
 
-    var belt = new Belt( 'belt_test', opts);
+    var belt = new Belt( new PouchDB('belt_test', opts), opts);
 
     before(function (done) {
         RSVP.all(createRepositories( belt, schemas ))
