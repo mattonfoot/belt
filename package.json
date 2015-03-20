@@ -26,8 +26,8 @@
   },
   "homepage": "https://github.com/mattonfoot/belt",
   "dependencies": {
-    "pouchdb": "~2.2.3",
-    "rsvp": "~3.0.6"
+    "pouchdb": "~3.0.6",
+    "rsvp": "~3.0.17"
   },
   "devDependencies": {
     "chai": "*",
