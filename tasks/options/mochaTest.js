@@ -5,8 +5,8 @@ module.exports = function( config ) {
     var tests = ['test/**/*.js'];
     var coverage = ['coverage/test/**/*.js'];
 
-    var configSlow = 75;
-    var configTimeout = 2000;
+    var configSlow;
+    var configTimeout;
 
     return {
 
