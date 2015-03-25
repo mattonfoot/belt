@@ -10,6 +10,7 @@ var schemas = {
     "person": {
         "name": String,
         "age": Number,
+        "birthday": Date,
         "vehicle": [ "vehicle" ],
         "partner": { ref: 'person', inverse: 'partner' },
         "sibling": [{ ref: 'person', inverse: 'sibling' }]
@@ -44,15 +45,18 @@ var fixtures = {
   "person": [
     {
       "name": "Jane",
-      "age": 21
+      "age": 21,
+      "birthday": new Date( '2013-03-21T00:00:00' )
     },
     {
       "name": "John",
-      "age": 42
+      "age": 42,
+      "birthday": new Date( '2010-03-42T00:00:00' )
     },
     {
       "name": "Richard",
-      "age": 36
+      "age": 36,
+      "birthday": new Date( '2005-03-36T00:00:00' )
     }
   ],
   "vehicle": [
@@ -75,25 +79,26 @@ function createResources( belt, fixtures, ids ) {
         process( fixture );
     }
 
-    return promises;
+    return RSVP.all( promises );
 
     function process( fixture ) {
-        fixtures[ fixture ]
-            .forEach(function( data ) {
-                var key = fixture;
+        fixtures[ fixture ].forEach(function( data ) {
+            var key = fixture;
 
-                promises.push(new Promise(function( resolve, reject ) {
-                    belt.create( key, data )
-                        .then(function( response ) {
-                            ids[key] = ids[key] || [];
+            var promise = new Promise(function( resolve, reject ) {
+                belt.create( key, data )
+                    .then(function( response ) {
+                        ids[key] = ids[key] || [];
 
-                            ids[key].push( { id: response.id, rev: response.rev });
+                        ids[key].push( { id: response.id, rev: response.rev });
 
-                            resolve();
-                        })
-                        .catch( reject );
-                }));
+                        resolve();
+                    })
+                    .catch( reject );
             });
+
+            promises.push( promise );
+        });
     }
 }
 
@@ -111,14 +116,10 @@ describe('using a repository', function () {
     before(function (done) {
         RSVP.all(createRepositories( belt, schemas ))
             .then(function() {
-                var promises = createResources( belt, fixtures, ids );
-
-                RSVP.all( promises )
-                    .then(function () {
-                        done();
-                    })
-                    .catch( done );
-            });
+                return createResources( belt, fixtures, ids );
+            })
+            .then(function() { done(); })
+            .catch( done );
     });
 
     describe('getting all resources', function () {
@@ -148,10 +149,8 @@ describe('using a repository', function () {
 
                         found.should.equal( ids[fixture].length );
                     })
-                    .then(function() {
-                        done();
-                    })
-                    .catch(done);
+                    .then(function() { done(); })
+                    .catch( done );
             });
         }
     });
@@ -186,6 +185,29 @@ describe('using a repository', function () {
                     .catch(done);
             });
         }
+    });
+
+    describe('data deserialization', function () {
+      it('Correctly deserialize Date values into date objects', function (done) {
+          var key = 'person';
+
+          var promises = ids[ key ].map(function ( instance ) {
+              return belt
+                  .find( key, instance.id )
+                  .then(function( resource ) {
+                      should.exist(resource);
+
+                      resource.should.have.property( 'birthday' );
+                      resource.birthday.should.be.an.instanceOf( Date );
+                  });
+          });
+
+          RSVP.all(promises)
+              .then(function() {
+                  done();
+              })
+              .catch(done);
+      });
     });
 
     describe('many to one association', function () {
