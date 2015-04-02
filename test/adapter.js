@@ -1,26 +1,108 @@
-
 var should = require('chai').should();
 var RSVP = require('rsvp');
 
 var Promise = RSVP.Promise;
 
 var PouchDB = require('pouchdb');
-var Belt = require('../lib/repository');
+var Belt = require('../lib/');
 
 var schemas = {
-    "person": {
-        "name": String,
-        "age": Number,
-        "birthday": Date,
-        "vehicle": [ "vehicle" ],
-        "partner": { ref: 'person', inverse: 'partner' },
-        "sibling": [{ ref: 'person', inverse: 'sibling' }]
-    },
-    "vehicle": {
-        "model": String,
-        "age": Number,
-        "owner": "person"
+
+  "person": {
+    "name": String,
+    "age": Number,
+    "birthday": Date,
+    "vehicle": [ "vehicle" ],
+    "partner": { ref: 'person', inverse: 'partner' },
+    "sibling": [{ ref: 'person', inverse: 'sibling' }]
+  },
+
+  "vehicle": {
+    "model": String,
+    "age": Number,
+    "owner": "person"
+  }
+
+};
+
+var factories = {
+
+  "person": function( data ) {
+    var thing = {};
+
+    for ( var prop in data ) {
+      if ( prop === 'links' ) continue;
+
+      thing[prop] = data[ prop ];
     }
+
+    for ( var link in data.links ) {
+      thing[link] = data.links[ link ];
+    }
+
+    return thing;
+  },
+
+  "vehicle": function( data ) {
+    var thing = {};
+
+    for ( var prop in data ) {
+      if ( prop === 'links' ) continue;
+
+      thing[prop] = data[ prop ];
+    }
+
+    for ( var link in data.links ) {
+      thing[link] = data.links[ link ];
+    }
+
+    return thing;
+  }
+
+};
+
+var validators = {
+
+  "person": function( data ) {
+    var validator = {
+      validForUpdate: true,
+      validForCreate: true,
+      issues: []
+    };
+
+    if ( !data.id ) {
+      validator.validForUpdate = false;
+      validator.issues.push( 'ID is required' );
+    }
+
+    if ( !data.name || data.name === '' ) {
+      validator.validForUpdate = validator.validForCreate = false;
+      validator.issues.push( 'Name is required' );
+    }
+
+    return validator;
+  },
+
+  "vehicle": function( data ) {
+    var validator = {
+      validForUpdate: true,
+      validForCreate: true,
+      issues: []
+    };
+
+    if ( !data.id ) {
+      validator.validForUpdate = false;
+      validator.issues.push( 'ID is required' );
+    }
+
+    if ( !data.model || data.model === '' ) {
+      validator.validForUpdate = validator.validForCreate = false;
+      validator.issues.push( 'Model are required' );
+    }
+
+    return validator;
+  }
+
 };
 
 // create repositories
@@ -35,7 +117,10 @@ function createRepositories( belt, schemas ) {
 
     function process( name ) {
         promises.push(new Promise(function( resolve ) {
-            belt.schema( name, schemas[ name ], true );
+          belt
+            .resource( name, factories[ name ] )
+            .schema( schemas[ name ] )
+            .validator( validators[ name ] );
 
             resolve();
         }));
@@ -89,6 +174,7 @@ function createResources( belt, fixtures, ids ) {
             var promise = new Promise(function( resolve, reject ) {
                 belt.create( key, data )
                     .then(function( response ) {
+
                         ids[key] = ids[key] || [];
 
                         ids[key].push( { id: response.id, rev: response.rev });
@@ -109,23 +195,23 @@ describe('using a repository', function () {
       , opts = {};
 
     if ( !process.browser ) {
-        opts.db = require('memdown');
+      opts.db = require('memdown');
     }
 
     var belt = new Belt( new PouchDB('belt_test', opts), opts);
 
     before(function (done) {
-        RSVP.all(createRepositories( belt, schemas ))
-            .then(function() {
-                return createResources( belt, fixtures, ids );
-            })
-            .then(function() { done(); })
-            .catch( done );
+      RSVP.all(createRepositories( belt, schemas ))
+          .then(function() {
+            return createResources( belt, fixtures, ids );
+          })
+          .then(function() { done(); })
+          .catch( done );
     });
 
     describe('getting all resources', function () {
         for ( var fixture in fixtures ) {
-            forFixture( fixture );
+          forFixture( fixture );
         }
 
         function forFixture( fixture ) {
@@ -228,11 +314,9 @@ describe('using a repository', function () {
                 .then(function( resource ) {
                     resource.id.should.equal( primaryid );
 
-                    resource.links = {
-                        vehicle: allSecondaryIds
-                    };
+                    resource.vehicle = allSecondaryIds;
 
-                    return belt.update( primaryType, primaryid, resource );
+                    return belt.update( primaryType, resource );
                 })
                 .then(function( info ) {
                     return belt.find( primaryType, info.id );
@@ -246,26 +330,24 @@ describe('using a repository', function () {
                     resource.should.not.have.property( '_rev' );
                     resource.rev.should.not.equal( primaryrev );
 
-                    resource.should.have.property( 'links' );
-                    resource.links.should.have.property( secondaryRelation );
-                    resource.links.vehicle.should.be.an( 'array' );
-                    resource.links.vehicle.length.should.equal( allSecondaryIds.length );
-                    resource.links.vehicle.should.include( allSecondaryIds[0] );
-                    resource.links.vehicle.should.include( allSecondaryIds[allSecondaryIds.length - 1] );
+                    resource.should.have.property( secondaryRelation );
+                    resource.vehicle.should.be.an( 'array' );
+                    resource.vehicle.length.should.equal( allSecondaryIds.length );
+                    resource.vehicle.should.include( allSecondaryIds[0] );
+                    resource.vehicle.should.include( allSecondaryIds[allSecondaryIds.length - 1] );
 
                     return resource;
                 })
                 .then(function( resource ) {
-                    return belt.findMany( secondaryType, resource.links.vehicle );
+                    return belt.findMany( secondaryType, resource.vehicle );
                 })
                 .then(function( resources ) {
                     should.exist(resources);
 
                     resources
                         .forEach(function( resource ) {
-                            resource.should.have.property( 'links' );
-                            resource.links.should.have.property( primaryRelation );
-                            resource.links.owner.should.equal( primaryid );
+                            resource.should.have.property( primaryRelation );
+                            resource.owner.should.equal( primaryid );
                         });
                 })
                 .then(function() {
@@ -284,9 +366,9 @@ describe('using a repository', function () {
                 .then(function( resource ) {
                     resource.id.should.equal( primaryid );
 
-                    delete resource.links.vehicle;
+                    delete resource.vehicle;
 
-                    return belt.update( primaryType, primaryid, resource );
+                    return belt.update( primaryType, resource );
                 })
                 .then(function( info ) {
                     return belt.find( primaryType, info.id );
@@ -300,7 +382,9 @@ describe('using a repository', function () {
                     resource.should.not.have.property( '_rev' );
                     resource.rev.should.not.equal( primaryrev );
 
-                    resource.should.not.have.property( 'links' );
+                    resource.should.not.have.property( 'vehicle' );
+                    resource.should.not.have.property( 'partner' );
+                    resource.should.not.have.property( 'sibling' );
 
                     return resource;
                 })
@@ -313,7 +397,7 @@ describe('using a repository', function () {
                     resources.length.should.not.equal( 0 );
                     resources
                         .forEach(function( resource ) {
-                            resource.should.not.have.property( 'links' );
+                          resource.should.not.have.property( 'owner' );
                         });
                 })
                 .then(function() {
@@ -345,11 +429,9 @@ describe('using a repository', function () {
                             resource.should.not.have.property( '_rev' );
                             resource.should.have.property( 'rev' );
 
-                            resource.links = {
-                                owner: personid
-                            };
+                            resource.owner = personid;
 
-                            return belt.update( 'vehicle', resource.id, resource );
+                            return belt.update( 'vehicle', resource );
                         });
 
                     return RSVP.all(promises);
@@ -362,9 +444,8 @@ describe('using a repository', function () {
 
                     resources
                         .forEach(function( resource ) {
-                            resource.should.have.property( 'links' );
-                            resource.links.should.have.property( 'owner' );
-                            resource.links.owner.should.equal( personid );
+                            resource.should.have.property( 'owner' );
+                            resource.owner.should.equal( personid );
                         });
                 })
                 .then(function( info ) {
@@ -379,12 +460,11 @@ describe('using a repository', function () {
                     resource.should.not.have.property( '_rev' );
                     resource.rev.should.not.equal( personrev );
 
-                    resource.should.have.property( 'links' );
-                    resource.links.should.have.property( 'vehicle' );
-                    resource.links.vehicle.should.be.an( 'array' );
-                    resource.links.vehicle.length.should.equal( allVehicles.length );
+                    resource.should.have.property( 'vehicle' );
+                    resource.vehicle.should.be.an( 'array' );
+                    resource.vehicle.length.should.equal( allVehicles.length );
                     allVehicles.forEach(function( id ){
-                        resource.links.vehicle.should.include( id );
+                        resource.vehicle.should.include( id );
                     });
 
                     done();
@@ -402,9 +482,9 @@ describe('using a repository', function () {
                 .then(function( resource ) {
                     resource.id.should.equal( personid );
 
-                    delete resource.links.vehicle;
+                    delete resource.vehicle;
 
-                    return belt.update( 'person', personid, resource );
+                    return belt.update( 'person', resource );
                 })
                 .then(function( info ) {
                     return belt.find( 'person', info.id );
@@ -455,11 +535,9 @@ describe('using a repository', function () {
 
                     resource.id.should.equal( personid );
 
-                    resource.links = {
-                        partner: partnerid
-                    };
+                    resource.partner = partnerid;
 
-                    return belt.update( 'person', personid, resource );
+                    return belt.update( 'person', resource );
                 })
                 .then(function( info ) {
                     return belt.find( 'person', info.id );
@@ -473,14 +551,13 @@ describe('using a repository', function () {
                     resource.should.not.have.property( '_rev' );
                     resource.rev.should.not.equal( personrev );
 
-                    resource.should.have.property( 'links' );
-                    resource.links.should.have.property( 'partner' );
-                    resource.links.partner.should.equal( partnerid );
+                    resource.should.have.property( 'partner' );
+                    resource.partner.should.equal( partnerid );
 
                     return resource;
                 })
                 .then(function( resource ) {
-                    return belt.find( 'person', resource.links.partner );
+                    return belt.find( 'person', resource.partner );
                 })
                 .then(function( resource ) {
                     should.exist(resource);
@@ -491,9 +568,8 @@ describe('using a repository', function () {
                     resource.should.not.have.property( '_rev' );
                     resource.rev.should.not.equal( partnerrev );
 
-                    resource.should.have.property( 'links' );
-                    resource.links.should.have.property( 'partner' );
-                    resource.links.partner.should.equal( personid );
+                    resource.should.have.property( 'partner' );
+                    resource.partner.should.equal( personid );
 
                     done();
                 })
@@ -512,9 +588,9 @@ describe('using a repository', function () {
 
                     resource.id.should.equal( personid );
 
-                    delete resource.links.partner;
+                    delete resource.partner;
 
-                    return belt.update( 'person', personid, resource );
+                    return belt.update( 'person', resource );
                 })
                 .then(function( info ) {
                     return belt.find( 'person', info.id );
@@ -528,7 +604,7 @@ describe('using a repository', function () {
                     resource.should.not.have.property( '_rev' );
                     resource.rev.should.not.equal( personrev );
 
-                    resource.should.not.have.property( 'links' );
+                    resource.should.not.have.property( 'partner' );
 
                     return resource;
                 })
@@ -541,7 +617,7 @@ describe('using a repository', function () {
                     resources.length.should.not.equal( 0 );
                     resources
                         .forEach(function( resource ) {
-                            resource.should.not.have.property( 'links' );
+                            resource.should.not.have.property( 'partner' );
                         });
 
                     done();
@@ -583,9 +659,7 @@ describe('using a repository', function () {
                             var others = [];
                             everyone.map(function( id ) { if ( id !== resource.id ) others.push( id ); });
 
-                            resource.links = {
-                                sibling: others
-                            };
+                            resource.sibling = others;
 
                             return belt.update( 'person', resource );
 
@@ -601,10 +675,9 @@ describe('using a repository', function () {
 
                     resources
                         .forEach(function( resource ) {
-                            resource.should.have.property( 'links' );
-                            resource.links.should.have.property( 'sibling' );
-                            resource.links.sibling.length.should.equal( everyone.length - 1 );
-                            resource.links.sibling.should.not.contain( resource.id );
+                            resource.should.have.property( 'sibling' );
+                            resource.sibling.length.should.equal( everyone.length - 1 );
+                            resource.sibling.should.not.contain( resource.id );
                         });
 
                     done();
@@ -641,10 +714,9 @@ describe('using a repository', function () {
                             resource.should.not.have.property( '_rev' );
                             resource.should.have.property( 'rev' );
 
-                            resource.should.have.property( 'links' );
-                            resource.links.should.have.property( 'sibling' );
+                            resource.should.have.property( 'sibling' );
 
-                            delete resource.links.sibling;
+                            delete resource.sibling;
 
                             return belt.update( 'person', resource );
                         });
@@ -660,7 +732,7 @@ describe('using a repository', function () {
                     resources.length.should.not.equal( 0 );
                     resources
                         .forEach(function( resource ) {
-                            resource.should.not.have.property( 'links' );
+                            resource.should.not.have.property( 'sibling' );
                         });
 
                     done();
@@ -693,4 +765,3 @@ describe('using a repository', function () {
     });
 
 });
-
