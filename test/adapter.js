@@ -190,7 +190,7 @@ function createResources( belt, fixtures, ids ) {
 }
 
 
-describe('using a repository', function () {
+describe('using the Adapter', function () {
     var ids = {}
       , opts = {};
 

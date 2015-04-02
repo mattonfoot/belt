@@ -1,10 +1,12 @@
 module.exports = function( config ) {
 
-    return {
-        coverage: {
-            src: ['test/**'],
-            dest: 'coverage/'
-        }
-    };
+  return {
+    coverage: {
+      expand: true,
+      cwd: './',
+      src: [ 'test/**/*.*' ],
+      dest: './coverage/'
+    }
+  };
 
 };
