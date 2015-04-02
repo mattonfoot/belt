@@ -27,15 +27,16 @@
   "homepage": "https://github.com/mattonfoot/belt",
   "dependencies": {
     "pouchdb": "~3.0.6",
-    "rsvp": "~3.0.17"
+    "rsvp": "~3.0.17",
+    "uuid": "~2.0.1"
   },
   "devDependencies": {
     "chai": "*",
     "glob": "*",
     "grunt": "*",
-    "grunt-cli": "*",
     "grunt-benchmark": "*",
     "grunt-blanket": "*",
+    "grunt-cli": "*",
     "grunt-complexity": "*",
     "grunt-contrib-clean": "*",
     "grunt-contrib-copy": "*",
