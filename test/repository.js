@@ -123,6 +123,28 @@ describe('using a repository', function () {
             .catch( done );
     });
 
+    after(function (done) {
+        var promises = [];
+
+        for (var key in ids) {
+            process( key );
+        }
+
+        RSVP.all(promises)
+            .then(function () {
+                done();
+            })
+            .catch(function ( error ) {
+                throw new Error('Failed to delete resources.');
+            });
+
+        function process( key ) {
+            ids[key].forEach(function( instance ) {
+                promises.push( belt.delete( key, instance.id ) );
+            });
+        }
+    });
+
     describe('getting all resources', function () {
         for ( var fixture in fixtures ) {
             forFixture( fixture );
@@ -670,27 +692,4 @@ describe('using a repository', function () {
 
     });
 
-    after(function (done) {
-        var promises = [];
-
-        for (var key in ids) {
-            process( key );
-        }
-
-        RSVP.all(promises)
-            .then(function () {
-                done();
-            })
-            .catch(function ( error ) {
-                throw new Error('Failed to delete resources.');
-            });
-
-        function process( key ) {
-            ids[key].forEach(function( instance ) {
-                promises.push( belt.delete( key, instance.id ) );
-            });
-        }
-    });
-
 });
-

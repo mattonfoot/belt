@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/mattonfoot/belt",
   "dependencies": {
+    "fast-json-patch": "^0.5.2",
     "pouchdb": "~3.0.6",
     "rsvp": "~3.0.17",
     "uuid": "~2.0.1"
