@@ -2,7 +2,7 @@ var mocha = require('mocha');
 
 module.exports = function( config ) {
 
-    var tests = ['test/**/*.js'];
+    var tests = ['test/**/*.js', '!**/*.skip.js'];
     var coverage = ['coverage/test/**/*.js'];
 
     var configSlow;
