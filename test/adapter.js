@@ -1,3 +1,4 @@
+
 var should = require('chai').should();
 var RSVP = require('rsvp');
 
@@ -137,12 +138,12 @@ var fixtures = {
     {
       "name": "John",
       "age": 42,
-      "birthday": new Date( '2010-03-42T00:00:00' )
+      "birthday": new Date( '2010-03-14T00:00:00' )
     },
     {
       "name": "Richard",
       "age": 36,
-      "birthday": new Date( '2005-03-36T00:00:00' )
+      "birthday": new Date( '2005-03-07T00:00:00' )
     }
   ],
   "vehicle": [
@@ -177,7 +178,7 @@ function createResources( belt, fixtures, ids ) {
 
                         ids[key] = ids[key] || [];
 
-                        ids[key].push( { id: response.id, rev: response.rev });
+                        ids[key].push( { id: response.id });
 
                         resolve();
                     })
@@ -198,7 +199,7 @@ describe('using the Adapter', function () {
       opts.db = require('memdown');
     }
 
-    var belt = new Belt( new PouchDB('belt_test', opts), opts);
+    var belt = new Belt( new PouchDB('belt_adapter_test', opts), opts);
 
     before(function (done) {
       RSVP.all(createRepositories( belt, schemas ))
@@ -226,9 +227,8 @@ describe('using the Adapter', function () {
                         ids[fixture].forEach(function ( instance ) {
                             resources.forEach(function( resource ) {
                                 resource.should.not.have.property( '_id' );
-                                resource.should.not.have.property( '_rev' );
 
-                                if (resource.id === instance.id && resource.rev === instance.rev) {
+                                if (resource.id === instance.id) {
                                     found++;
                                 }
                             });
@@ -259,9 +259,6 @@ describe('using the Adapter', function () {
 
                             resource.should.not.have.property( '_id' );
                             resource.id.should.equal( instance.id );
-
-                            resource.should.not.have.property( '_rev' );
-                            resource.rev.should.equal( instance.rev );
                         });
                 });
 
@@ -305,9 +302,7 @@ describe('using the Adapter', function () {
 
         it('link one resource to multiple resources', function (done) {
             var primaryid = ids.person[0].id
-              , primaryrev = ids.person[0].rev
               , secondaryid = ids.vehicle[0].id
-              , secondaryrev = ids.vehicle[0].rev
               , allSecondaryIds = ids.vehicle.map(function( instance ) { return instance.id; });
 
             belt.find( primaryType , primaryid )
@@ -326,9 +321,6 @@ describe('using the Adapter', function () {
 
                     resource.should.not.have.property( '_id' );
                     resource.id.should.equal( primaryid );
-
-                    resource.should.not.have.property( '_rev' );
-                    resource.rev.should.not.equal( primaryrev );
 
                     resource.should.have.property( secondaryRelation );
                     resource.vehicle.should.be.an( 'array' );
@@ -358,9 +350,7 @@ describe('using the Adapter', function () {
 
         it('unlink one resource to multiple resources', function (done) {
             var primaryid = ids.person[0].id
-              , primaryrev = ids.person[0].rev
-              , secondaryid = ids.vehicle[0].id
-              , secondaryrev = ids.vehicle[0].rev;
+              , secondaryid = ids.vehicle[0].id;
 
             belt.find( primaryType , primaryid )
                 .then(function( resource ) {
@@ -378,9 +368,6 @@ describe('using the Adapter', function () {
 
                     resource.should.not.have.property( '_id' );
                     resource.id.should.equal( primaryid );
-
-                    resource.should.not.have.property( '_rev' );
-                    resource.rev.should.not.equal( primaryrev );
 
                     resource.should.not.have.property( 'vehicle' );
                     resource.should.not.have.property( 'partner' );
@@ -412,9 +399,7 @@ describe('using the Adapter', function () {
 
         it('link multiple resources to one resource', function (done) {
             var personid = ids.person[0].id
-              , personrev = ids.person[0].rev
               , vehicleid = ids.vehicle[0].id
-              , vehiclerev = ids.vehicle[0].rev
               , allVehicles = ids.vehicle.map(function( instance ) { return instance.id; });
 
             belt.findMany( 'vehicle' , allVehicles )
@@ -425,9 +410,6 @@ describe('using the Adapter', function () {
                         .map(function( resource ) {
                             resource.should.not.have.property( '_id' );
                             resource.should.have.property( 'id' );
-
-                            resource.should.not.have.property( '_rev' );
-                            resource.should.have.property( 'rev' );
 
                             resource.owner = personid;
 
@@ -457,9 +439,6 @@ describe('using the Adapter', function () {
                     resource.should.not.have.property( '_id' );
                     resource.id.should.equal( personid );
 
-                    resource.should.not.have.property( '_rev' );
-                    resource.rev.should.not.equal( personrev );
-
                     resource.should.have.property( 'vehicle' );
                     resource.vehicle.should.be.an( 'array' );
                     resource.vehicle.length.should.equal( allVehicles.length );
@@ -474,9 +453,7 @@ describe('using the Adapter', function () {
 
         it('unlink multiple resources from one resource', function (done) {
             var personid = ids.person[0].id
-              , personrev = ids.person[0].rev
-              , vehicleid = ids.vehicle[0].id
-              , vehiclerev = ids.vehicle[0].rev;
+              , vehicleid = ids.vehicle[0].id;
 
             belt.find( 'person' , personid )
                 .then(function( resource ) {
@@ -494,9 +471,6 @@ describe('using the Adapter', function () {
 
                     resource.should.not.have.property( '_id' );
                     resource.id.should.equal( personid );
-
-                    resource.should.not.have.property( '_rev' );
-                    resource.rev.should.not.equal( personrev );
 
                     resource.should.not.have.property( 'links' );
 
@@ -525,9 +499,7 @@ describe('using the Adapter', function () {
 
         it('link one resource to one other', function (done) {
             var personid = ids.person[0].id
-              , personrev = ids.person[0].rev
-              , partnerid = ids.person[1].id
-              , partnerrev = ids.person[1].rev;
+              , partnerid = ids.person[1].id;
 
             belt.find( 'person' , personid )
                 .then(function( resource ) {
@@ -548,9 +520,6 @@ describe('using the Adapter', function () {
                     resource.should.not.have.property( '_id' );
                     resource.id.should.equal( personid );
 
-                    resource.should.not.have.property( '_rev' );
-                    resource.rev.should.not.equal( personrev );
-
                     resource.should.have.property( 'partner' );
                     resource.partner.should.equal( partnerid );
 
@@ -565,9 +534,6 @@ describe('using the Adapter', function () {
                     resource.should.not.have.property( '_id' );
                     resource.id.should.equal( partnerid );
 
-                    resource.should.not.have.property( '_rev' );
-                    resource.rev.should.not.equal( partnerrev );
-
                     resource.should.have.property( 'partner' );
                     resource.partner.should.equal( personid );
 
@@ -578,9 +544,7 @@ describe('using the Adapter', function () {
 
         it('unlink one resource from one other', function (done) {
             var personid = ids.person[0].id
-              , personrev = ids.person[0].rev
-              , partnerid = ids.person[1].id
-              , partnerrev = ids.person[1].rev;
+              , partnerid = ids.person[1].id;
 
             belt.find( 'person' , personid )
                 .then(function( resource ) {
@@ -600,9 +564,6 @@ describe('using the Adapter', function () {
 
                     resource.should.not.have.property( '_id' );
                     resource.id.should.equal( personid );
-
-                    resource.should.not.have.property( '_rev' );
-                    resource.rev.should.not.equal( personrev );
 
                     resource.should.not.have.property( 'partner' );
 
@@ -652,9 +613,6 @@ describe('using the Adapter', function () {
                             resource.should.not.have.property( '_id' );
                             resource.should.have.property( 'id' );
                             resource.id.should.not.equal( firstPerson );
-
-                            resource.should.not.have.property( '_rev' );
-                            resource.should.have.property( 'rev' );
 
                             var others = [];
                             everyone.map(function( id ) { if ( id !== resource.id ) others.push( id ); });
@@ -710,9 +668,6 @@ describe('using the Adapter', function () {
                             resource.should.not.have.property( '_id' );
                             resource.should.have.property( 'id' );
                             resource.id.should.not.equal( firstPerson );
-
-                            resource.should.not.have.property( '_rev' );
-                            resource.should.have.property( 'rev' );
 
                             resource.should.have.property( 'sibling' );
 
