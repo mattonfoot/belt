@@ -11,17 +11,20 @@ var fixtures = {
     {
       "name": "Jane",
       "age": 21,
-      "birthday": new Date( '2013-03-21T00:00:00' )
+      "birthday": new Date( '2013-03-21T00:00:00' ),
+      "siblings": [ "Richard", "John" ]
     },
     {
       "name": "John",
-      "age": 42,
-      "birthday": new Date( '2010-03-14T00:00:00' )
+      "age": 21,
+      "birthday": new Date( '2010-03-14T00:00:00' ),
+      "siblings": [ "Richard", "Jane" ]
     },
     {
       "name": "Richard",
       "age": 36,
-      "birthday": new Date( '2005-03-07T00:00:00' )
+      "birthday": new Date( '2005-03-07T00:00:00' ),
+      "siblings": [ "John", "Jane" ]
     }
   ]
 };
@@ -287,7 +290,7 @@ describe('using a model', function () {
       }
     });
 
-    it('by adding a property with a single string value', function ( done ) {
+    it.skip('by adding a property with a single string value', function ( done ) {
       var model = models.person;
       var ids = [];
 
@@ -295,11 +298,11 @@ describe('using a model', function () {
         ids.push( docid );
       }
 
-      var query = { _id: ids[ 0 ] };
+      var query = { key: ids[ 0 ] };
 
       var patch = { op: 'add', path: '/special', value: 'bob' };
 
-      model.patch( query, patch, function( error, resource ) {
+      model.patchMany( query, patch, function( error, resource ) {
         if (error) return done( error );
 
         should.exist( resource );
@@ -307,7 +310,7 @@ describe('using a model', function () {
         resource.should.have.length( 1 );
 
         resource[0].should.have.property( '_id' );
-        resource[0]._id.should.equal( query._id );
+        resource[0]._id.should.equal( query.key );
 
         resource[0].should.have.property( 'doctype' );
         resource[0].doctype.should.equal( 'person' );
@@ -319,7 +322,7 @@ describe('using a model', function () {
       });
     });
 
-    it('by removing a property with a single string value', function ( done ) {
+    it.skip('by removing a property with a single string value', function ( done ) {
       var model = models.person;
       var ids = [];
 
@@ -327,11 +330,11 @@ describe('using a model', function () {
         ids.push( docid );
       }
 
-      var query = { _id: ids[ 0 ] };
+      var query = { key: ids[ 0 ] };
 
       var patch = { op: 'remove', path: '/name' };
 
-      model.patch( query, patch, function( error, resource ) {
+      model.patchMany( query, patch, function( error, resource ) {
         if (error) return done( error );
 
         should.exist( resource );
@@ -339,7 +342,7 @@ describe('using a model', function () {
         resource.should.have.length( 1 );
 
         resource[0].should.have.property( '_id' );
-        resource[0]._id.should.equal( query._id );
+        resource[0]._id.should.equal( query.key );
 
         resource[0].should.have.property( 'doctype' );
         resource[0].doctype.should.equal( 'person' );
@@ -350,7 +353,7 @@ describe('using a model', function () {
       });
     });
 
-    it('by replacing a property with a single string value', function ( done ) {
+    it.skip('by replacing a property with a single string value', function ( done ) {
       var model = models.person;
       var ids = [];
 
@@ -358,11 +361,11 @@ describe('using a model', function () {
         ids.push( docid );
       }
 
-      var query = { _id: ids[ 0 ] };
+      var query = { key: ids[ 0 ] };
 
       var patch = { op: 'replace', path: '/name', value: 'bob' };
 
-      model.patch( query, patch, function( error, resource ) {
+      model.patchMany( query, patch, function( error, resource ) {
         if (error) return done( error );
 
         should.exist( resource );
@@ -370,7 +373,7 @@ describe('using a model', function () {
         resource.should.have.length( 1 );
 
         resource[0].should.have.property( '_id' );
-        resource[0]._id.should.equal( query._id );
+        resource[0]._id.should.equal( query.key );
 
         resource[0].should.have.property( 'doctype' );
         resource[0].doctype.should.equal( 'person' );
@@ -382,7 +385,7 @@ describe('using a model', function () {
       });
     });
 
-    it('by adding a value to a property that is an array', function ( done ) {
+    it.skip('by adding a value to a property that is an array', function ( done ) {
       var model = models.person;
       var ids = [];
 
@@ -390,14 +393,14 @@ describe('using a model', function () {
         ids.push( docid );
       }
 
-      var query = { _id: ids[ 0 ] };
+      var query = { key: ids[ 0 ] };
 
       var patch = [
         { op: 'add', path: '/list', value: [] },
-        { op: 'add', path: '/list/1', value: 'ernie' }
+        { op: 'add', path: '/list/ernie', value: 'ernie' }
       ];
 
-      model.patch( query, patch, function( error, resource ) {
+      model.patchMany( query, patch, function( error, resource ) {
         if (error) return done( error );
 
         should.exist( resource );
@@ -405,7 +408,7 @@ describe('using a model', function () {
         resource.should.have.length( 1 );
 
         resource[0].should.have.property( '_id' );
-        resource[0]._id.should.equal( query._id );
+        resource[0]._id.should.equal( query.key );
 
         resource[0].should.have.property( 'doctype' );
         resource[0].doctype.should.equal( 'person' );
@@ -419,7 +422,7 @@ describe('using a model', function () {
       });
     });
 
-    it('by removing a value in a property that is an array', function ( done ) {
+    it.skip('by removing a value in a property that is an array', function ( done ) {
       var model = models.person;
       var ids = [];
 
@@ -427,14 +430,14 @@ describe('using a model', function () {
         ids.push( docid );
       }
 
-      var query = { _id: ids[ 0 ] };
+      var query = { key: ids[ 0 ] };
 
       var patch = [
         { op: 'add', path: '/list', value: [ 'bert', 'ernie' ] },
         { op: 'remove', path: '/list/bert' }
       ];
 
-      model.patch( query, patch, function( error, resource ) {
+      model.patchMany( query, patch, function( error, resource ) {
         if (error) return done( error );
 
         should.exist( resource );
@@ -442,7 +445,7 @@ describe('using a model', function () {
         resource.should.have.length( 1 );
 
         resource[0].should.have.property( '_id' );
-        resource[0]._id.should.equal( query._id );
+        resource[0]._id.should.equal( query.key );
 
         resource[0].should.have.property( 'doctype' );
         resource[0].doctype.should.equal( 'person' );
@@ -453,6 +456,156 @@ describe('using a model', function () {
         resource[0].list.should.include( 'ernie' );
 
         done();
+      });
+    });
+  });
+
+  describe('to find a specific document', function () {
+    beforeEach(function ( done ) {
+      var promises = [];
+
+      var docs = this.docs = this.docs || {};
+
+      for ( var name in fixtures ) {
+        var fixture = fixtures[ name ];
+
+        for (var i = 0, len = fixture.length; i < len; i++ ) {
+          var data = fixture[ i ];
+
+          var promise = postData( name, data );
+
+          promises.push( promise );
+        }
+      }
+
+      RSVP.all( promises )
+        .then(function() {
+          done();
+        })
+        .catch( done );
+
+      function postData( schema, data ) {
+        var model = models[ schema ];
+
+        return new Promise(function( resolve, reject ) {
+          model.post( data, function( error, resource ) {
+            if ( error ) return reject( error );
+
+            docs[ schema ] = docs[ schema ] || {};
+            docs[ schema ][ resource._id ] = resource;
+
+            resolve( resource );
+          });
+        });
+      }
+    });
+
+    afterEach(function( done ) {
+      var promises = [];
+
+      var docs = this.docs = this.docs || {};
+
+      for ( var name in fixtures ) {
+        for ( var id in docs[ name ] ) {
+          var promise = removeDoc( name, id );
+
+          promises.push( promise );
+        }
+      }
+
+      RSVP.all( promises )
+        .then(function() {
+          done();
+        })
+        .catch( done );
+
+      function removeDoc( schema, id ) {
+        var model = models[ schema ];
+
+        return new Promise(function( resolve, reject ) {
+          model.remove( id, function( error, resource ) {
+            if ( error ) return reject( error );
+
+            delete docs[ schema ][ resource._id ];
+
+            resolve( resource );
+          });
+        });
+      }
+    });
+
+    it('by specifying an id', function ( done ) {
+      var model = models.person;
+      var ids = [];
+
+      for ( var docid in this.docs.person ) {
+        ids.push( docid );
+      }
+
+      var find = { _id: ids[ 0 ] };
+
+      model.allDocs( find, function( error, resources ) {
+        should.exist( resources );
+
+        resources.should.have.length( 1 );
+
+        model.query( find, function( error, resources ) {
+          should.exist( resources );
+
+          resources.should.have.length( 1 );
+
+          done();
+        });
+      });
+    });
+
+    it('by specifying a property value', function ( done ) {
+      var model = models.person;
+      var ids = [];
+
+      for ( var docid in this.docs.person ) {
+        ids.push( docid );
+      }
+
+      var find = { age: 21 };
+
+      model.allDocs( find, function( error, resources ) {
+        should.exist( resources );
+
+        resources.should.have.length( 2 );
+
+        model.query( find, function( error, resources ) {
+          should.exist( resources );
+
+          resources.should.have.length( 2 );
+
+          done();
+        });
+      });
+    });
+
+    it('by specifying a value within an array property', function ( done ) {
+      var model = models.person;
+      var ids = [];
+
+      for ( var docid in this.docs.person ) {
+        ids.push( docid );
+      }
+
+      var find = { siblings: "John" };
+
+      model.allDocs( find, function( error, resources ) {
+        should.exist( resources );
+
+        resources.should.have.length( 2 );
+
+        model.query( find, function( error, resources ) {
+          should.exist( resources );
+
+          resources.should.have.length( 2 );
+
+          done();
+        });
       });
     });
   });
